@@ -1,0 +1,327 @@
+================================================================================
+                    PROJECT SETUP & BUILD GUIDE (FROM SCRATCH)
+                  Java 21+ • Apache Maven • Clean Architecture
+================================================================================
+
+This guide explains step-by-step how a professional Java Maven project like 
+"sales-report" is planned, structured, configured, and built from zero.
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+1. Mental Model: What is Maven and Why Use It?
+2. Standard Directory Layout (Maven Conventions)
+3. Step 1: Creating the Directory Structure via Command Line
+4. Step 2: Creating and Understanding pom.xml
+5. Step 3: Setting Up .gitignore
+6. Step 4: Package Architecture & Designing the Code
+7. Step 5: Setting Up Unit & Architecture Tests
+8. Step 6: Common Maven Commands Reference
+9. Step 7: Running the Application
+10. Step 8: Git Commit & Push Workflow
+
+================================================================================
+1. MENTAL MODEL: WHAT IS MAVEN AND WHY USE IT?
+================================================================================
+In raw Java, to compile and run code with dependencies, you would have to manually:
+- Download .jar files from the internet.
+- Put them in a lib/ folder.
+- Run long commands like: javac -cp "lib/junit.jar;lib/archunit.jar" ...
+- Keep track of versions and transitive dependencies yourself.
+
+Apache Maven solves this using two principles:
+1. "Convention over Configuration":
+   If you put your code in standard folders (like src/main/java), Maven knows 
+   automatically how to find it, compile it, and package it without needing 
+   custom scripts.
+2. Centralized Dependency Management:
+   You declare what libraries you need in pom.xml, and Maven downloads them 
+   automatically from Maven Central repository.
+
+================================================================================
+2. STANDARD DIRECTORY LAYOUT (MAVEN CONVENTIONS)
+================================================================================
+Every standard Maven project follows this exact tree:
+
+my-project/
+├── pom.xml                     <-- The blueprint (config, dependencies, plugins)
+├── .gitignore                  <-- Git ignore file (ignore target/, data/, etc.)
+├── src/
+│   ├── main/
+│   │   ├── java/               <-- Production Java source code
+│   │   │   └── edu/itc/salesreport/
+│   │   │       ├── App.java
+│   │   │       ├── model/      <-- Domain entities / records
+│   │   │       ├── ingest/     <-- Parsers & loaders
+│   │   │       └── render/     <-- Output formatters
+│   │   └── resources/          <-- Non-code assets (configs, templates, icons)
+│   └── test/
+│       ├── java/               <-- Test code (JUnit, ArchUnit)
+│       │   └── edu/itc/salesreport/
+│       │       ├── DependencyRulesTest.java
+│       │       └── ...
+│       └── resources/          <-- Test data (mock CSVs, fixtures)
+└── target/                     <-- AUTO-GENERATED: Compiled .class files & JARs
+
+Key rule:
+Package names in Java map directly to folder paths!
+Package: edu.itc.salesreport.model
+Folder:  src/main/java/edu/itc/salesreport/model
+
+================================================================================
+3. STEP 1: CREATING THE DIRECTORY STRUCTURE VIA COMMAND LINE
+================================================================================
+You can create this entire folder tree in 10 seconds using terminal commands:
+
+--- In Windows PowerShell: ---
+New-Item -ItemType Directory -Force -Path `
+  "src/main/java/edu/itc/salesreport/model", `
+  "src/main/java/edu/itc/salesreport/ingest", `
+  "src/main/java/edu/itc/salesreport/render", `
+  "src/test/java/edu/itc/salesreport/model", `
+  "src/test/java/edu/itc/salesreport/ingest", `
+  "src/test/java/edu/itc/salesreport/render", `
+  "tools", `
+  "lab01/adr", `
+  "note"
+
+--- In Git Bash / Linux / macOS: ---
+mkdir -p src/main/java/edu/itc/salesreport/{model,ingest,render}
+mkdir -p src/test/java/edu/itc/salesreport/{model,ingest,render}
+mkdir -p tools lab01/adr note
+
+================================================================================
+4. STEP 2: CREATING AND UNDERSTANDING POM.XML
+================================================================================
+The pom.xml ("Project Object Model") is located at the root of your project.
+Here is how you write it block by block:
+
+--------------------------------------------------------------------------------
+A. Root Tag and XML Schema
+--------------------------------------------------------------------------------
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+* Always use modelVersion 4.0.0 for Maven 2 and 3.
+
+--------------------------------------------------------------------------------
+B. Project Coordinates (G-A-V)
+--------------------------------------------------------------------------------
+    <groupId>edu.itc</groupId>
+    <artifactId>sales-report</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+* groupId:    Usually your organization or university domain in reverse (edu.itc).
+* artifactId: The unique name of this project / output jar file.
+* version:    The version number. "-SNAPSHOT" means currently in development.
+
+--------------------------------------------------------------------------------
+C. Properties (Java Version & Settings)
+--------------------------------------------------------------------------------
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.jupiter.version>5.10.2</junit.jupiter.version>
+        <archunit.version>1.3.0</archunit.version>
+    </properties>
+
+* Tells Maven to compile for modern Java 21+ features (like records, pattern matching).
+* Uses UTF-8 encoding so characters won't get corrupted across Windows/Linux.
+* Stores library versions as variables so upgrading is easy.
+
+--------------------------------------------------------------------------------
+D. Dependencies (External Libraries)
+--------------------------------------------------------------------------------
+    <dependencies>
+        <!-- JUnit 5: For writing and running automated unit tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ArchUnit: For verifying architectural rules and preventing layer leaks -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>${archunit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+* <scope>test</scope> means these libraries are only used during tests, NOT bundled
+  into production runtime, keeping the app lightweight.
+
+--------------------------------------------------------------------------------
+E. Build Plugins
+--------------------------------------------------------------------------------
+    <build>
+        <plugins>
+            <!-- Compiler plugin: Compiles Java files -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+
+            <!-- Surefire plugin: Discovers and executes JUnit test cases -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+
+            <!-- Exec plugin: Lets you run the app directly via 'mvn exec:java' -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <mainClass>edu.itc.salesreport.App</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+================================================================================
+5. STEP 3: SETTING UP .GITIGNORE
+================================================================================
+Never commit compiled binaries or generated test data to Git.
+Create a file named `.gitignore` at the project root:
+
+target/
+data/
+*.class
+.idea/
+*.iml
+.vscode/
+
+* target/ contains gigabytes of generated bytecode.
+* data/ contains local sample CSVs generated during testing.
+
+================================================================================
+6. STEP 4: PACKAGE ARCHITECTURE & DESIGNING THE CODE
+================================================================================
+When designing software, group code into clear responsibilities:
+
+1. edu.itc.salesreport.model (Core Domain Layer)
+   - Contains: PaymentMethod, SaleTransaction, ProductTotal, BranchSummary, MonthlyReport.
+   - Design Rule: Zero dependencies on external layers! Models should NOT know 
+     how files are read or how reports are rendered.
+   - Use Java records: immutable, thread-safe, auto-generates constructor/getters.
+
+2. edu.itc.salesreport.ingest (Data Ingestion Layer)
+   - Contains: TransactionParser, CsvTransactionParser, InvalidRowException,
+     MonthLoader, LoadEvent, LoadListener, ConsoleProgress.
+   - Design Patterns:
+     * Strategy Pattern: TransactionParser interface decouples parsing logic.
+     * Observer Pattern: LoadListener & LoadEvent allow progress reporting
+       without hardcoding System.out into the loader.
+   - Fault Tolerance: Catch InvalidRowException per row; do NOT abort the whole file.
+
+3. edu.itc.salesreport.render (Presentation Layer)
+   - Contains: ReportRenderer, TextReportRenderer, HtmlReportRenderer, CsvReportRenderer.
+   - Design Pattern:
+     * Strategy Pattern: ReportRenderer interface allows easily adding new 
+       formats (PDF, Excel, JSON) without altering business logic.
+
+4. edu.itc.salesreport.App (Application Entrypoint)
+   - Parses CLI arguments, registers listeners, runs loader, calls renderers.
+
+================================================================================
+7. STEP 5: SETTING UP UNIT & ARCHITECTURE TESTS
+================================================================================
+Always test both individual components AND architectural boundaries:
+
+1. Domain Tests (src/test/.../model/SaleTransactionTest.java):
+   - Test math: gross amount, discount amount, net line total.
+   - Test validation: reject negative quantity, reject invalid discount.
+
+2. Parser Tests (src/test/.../ingest/CsvTransactionParserTest.java):
+   - Test valid row parsing.
+   - Test deliberately bad rows: non-numeric quantity ("two"), bad enum ("PAYPAL").
+
+3. Ingestion Tests (src/test/.../ingest/MonthLoaderTest.java):
+   - Test loading files in temp folder using JUnit's @TempDir.
+   - Ensure bad rows are skipped and valid rows are aggregated.
+
+4. ArchUnit Tests (src/test/.../DependencyRulesTest.java):
+   - Automatically proves at build time:
+     * model does not import ingest or render.
+     * ingest does not import render.
+     * render does not import ingest.
+     * No circular package dependencies.
+
+================================================================================
+8. STEP 6: COMMON MAVEN COMMANDS REFERENCE
+================================================================================
+Run these from the project root (where pom.xml is):
+
+- mvn clean
+  Deletes the target/ directory (cleans previous build artifacts).
+
+- mvn compile
+  Compiles all production classes from src/main/java into target/classes.
+
+- mvn test-compile
+  Compiles test classes from src/test/java into target/test-classes.
+
+- mvn test
+  Runs all unit and architecture tests via Surefire. Fails if any test fails.
+
+- mvn package
+  Compiles, runs tests, and packages code into a JAR in target/sales-report-1.0-SNAPSHOT.jar.
+
+- mvn clean test
+  Best practice before committing: cleans and runs all tests from scratch.
+
+================================================================================
+9. STEP 7: RUNNING THE APPLICATION
+================================================================================
+1. Generate test data:
+   java tools/SampleData.java 2026-09 5 200
+
+2. Run with Maven exec plugin:
+   mvn exec:java
+
+3. Or run compiled classes directly with java:
+   java -cp target/classes edu.itc.salesreport.App 2026-09 all
+
+   Arguments supported:
+   [month: YYYY-MM] [format: text|html|csv|all] [dataDir]
+
+================================================================================
+10. STEP 8: GIT COMMIT & PUSH WORKFLOW
+================================================================================
+When you are ready to save and publish your work:
+
+1. Check what changed:
+   git status
+
+2. Stage all project files:
+   git add .
+
+3. Commit with a meaningful conventional message:
+   git commit -m "feat(lab01): setup maven project, clean architecture, and tests"
+
+4. Push to remote repository branch:
+   git push -u origin lab-01
+
+================================================================================
+SUMMARY CHECKLIST FOR ANY NEW JAVA PROJECT:
+================================================================================
+[x] 1. Choose JDK version (e.g. Java 21 LTS).
+[x] 2. Create standard folder structure (src/main/java, src/test/java).
+[x] 3. Create pom.xml with GAV coordinates, properties, and dependencies.
+[x] 4. Create .gitignore (target/, data/, IDE files).
+[x] 5. Organize classes into decoupled packages by responsibility.
+[x] 6. Write unit tests and architecture guardrails (ArchUnit).
+[x] 7. Validate with 'mvn clean test'.
+[x] 8. Commit and push.
+================================================================================
