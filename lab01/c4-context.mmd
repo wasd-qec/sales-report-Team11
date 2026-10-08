@@ -1,0 +1,24 @@
+graph TB
+    title[System Context Diagram - Sales Reporting System]
+
+    User[Store Manager / Business Analyst]
+    POS[Branch POS Systems<br>PNH, REP, BTB]
+    System[Sales Report System<br>edu.itc.salesreport]
+    FS[Local File Storage<br>data/YYYY-MM/*.csv]
+    Outputs[Report Artifacts<br>Console, HTML, CSV]
+
+    POS -->|Exports daily batch CSVs| FS
+    FS -->|Reads transactions| System
+    User -->|Triggers report generation CLI| System
+    System -->|Produces tabular output & exports| Outputs
+    Outputs -->|Reviews monthly performance| User
+
+    classDef primary fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff;
+    classDef external fill:#64748b,stroke:#475569,stroke-width:1px,color:#ffffff;
+    classDef storage fill:#059669,stroke:#047857,stroke-width:1px,color:#ffffff;
+    classDef user fill:#d97706,stroke:#b45309,stroke-width:1px,color:#ffffff;
+
+    class System primary;
+    class POS,Outputs external;
+    class FS storage;
+    class User user;
