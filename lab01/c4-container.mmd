@@ -1,0 +1,29 @@
+graph TB
+    title[Container Diagram - Sales Reporting Application]
+
+    subgraph Boundaries[Sales Reporting System Boundary]
+        CLI[CLI Entrypoint & Orchestration<br>Java Application: App.java]
+        IngestionEngine[Ingestion & Parsing Subsystem<br>MonthLoader, CsvTransactionParser]
+        DomainCore[Domain Model & Analytics<br>SaleTransaction, MonthlyReport, Records]
+        RenderEngine[Report Rendering Subsystem<br>Text, HTML, CSV Renderers]
+    end
+
+    User[User / Analyst]
+    DataDir[Data Directory<br>data/2026-09/*.csv]
+    ReportFiles[Generated Reports<br>.html, .csv]
+
+    User -->|Executes CLI command with month/format| CLI
+    CLI -->|Initiates batch load| IngestionEngine
+    IngestionEngine -->|Reads CSV files line by line| DataDir
+    IngestionEngine -->|Instantiates & validates records| DomainCore
+    IngestionEngine -->|Emits progress events to| CLI
+    CLI -->|Passes aggregated MonthlyReport to| RenderEngine
+    RenderEngine -->|Prints to stdout / Writes to disk| ReportFiles
+
+    classDef container fill:#1e40af,stroke:#1e3a8a,stroke-width:2px,color:#ffffff;
+    classDef domain fill:#047857,stroke:#065f46,stroke-width:2px,color:#ffffff;
+    classDef external fill:#475569,stroke:#334155,stroke-width:1px,color:#ffffff;
+
+    class CLI,IngestionEngine,RenderEngine container;
+    class DomainCore domain;
+    class User,DataDir,ReportFiles external;

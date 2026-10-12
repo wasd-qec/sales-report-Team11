@@ -1,0 +1,65 @@
+graph TB
+    title[Component Diagram - salesreport Packages & Interfaces]
+
+    subgraph AppPackage[edu.itc.salesreport]
+        App[App.java]
+    end
+
+    subgraph IngestPackage[edu.itc.salesreport.ingest]
+        ML[MonthLoader]
+        TP[«interface»<br>TransactionParser]
+        CTP[CsvTransactionParser]
+        LE[LoadEvent]
+        LL[«interface»<br>LoadListener]
+        CP[ConsoleProgress]
+        IRE[InvalidRowException]
+
+        ML -->|uses| TP
+        CTP ..|> TP
+        ML -->|notifies| LL
+        CP ..|> LL
+        CP -->|receives| LE
+        CTP -->|throws| IRE
+        ML -->|catches| IRE
+    end
+
+    subgraph ModelPackage[edu.itc.salesreport.model]
+        ST[SaleTransaction]
+        PM[«enum»<br>PaymentMethod]
+        MR[MonthlyReport]
+        BS[BranchSummary]
+        PT[ProductTotal]
+
+        ST --> PM
+        MR --> BS
+        MR --> PT
+        BS --> PM
+    end
+
+    subgraph RenderPackage[edu.itc.salesreport.render]
+        RR[«interface»<br>ReportRenderer]
+        TRR[TextReportRenderer]
+        HRR[HtmlReportRenderer]
+        CRR[CsvReportRenderer]
+
+        TRR ..|> RR
+        HRR ..|> RR
+        CRR ..|> RR
+    end
+
+    App --> ML
+    App --> CP
+    App --> RR
+    ML -->|aggregates into| MR
+    CTP -->|creates| ST
+    RR -->|reads data from| MR
+
+    classDef core fill:#2563eb,stroke:#1d4ed8,stroke-width:1px,color:#ffffff;
+    classDef model fill:#059669,stroke:#047857,stroke-width:1px,color:#ffffff;
+    classDef render fill:#7c3aed,stroke:#6d28d9,stroke-width:1px,color:#ffffff;
+    classDef entry fill:#d97706,stroke:#b45309,stroke-width:2px,color:#ffffff;
+
+    class ML,TP,CTP,LE,LL,CP,IRE core;
+    class ST,PM,MR,BS,PT model;
+    class RR,TRR,HRR,CRR render;
+    class App entry;
