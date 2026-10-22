@@ -1,0 +1,39 @@
+flowchart TB
+  analyst["Analyst<br/>[Person]<br/>Head office: views and exports monthly sales reports"]:::person
+  manager["Branch manager<br/>[Person]<br/>Branch (PNH, REP, BTB): views own branch report"]:::person
+  director["Finance director<br/>[Person]<br/>Head office: receives report-ready notification"]:::person
+
+  pos["Branch POS systems<br/>[External system, x3]<br/>Exports daily sales transactions CSV"]:::external
+  mail["E-mail service<br/>[External system]<br/>Corporate SMTP mail service"]:::external
+
+  subgraph boundary["Monthly Sales Report System"]
+    landing[("Landing Zone<br/>[File System]<br/>Receives and stores raw daily CSV files from POS")]:::db
+    ingest["Ingest Job<br/>[Java 25 CLI Batch Job]<br/>Parses daily CSVs, validates rows, and stages transactions"]:::container
+    engine["Report Batch<br/>[Java 25 Application]<br/>Aggregates metrics, detects anomalies, renders reports"]:::container
+    store[("Report Store<br/>[File System]<br/>Persists generated monthly reports (HTML, CSV, Text)")]:::db
+    desktop["Desktop Viewer<br/>[JavaFX 25 Desktop Application]<br/>Allows analysts to view, filter, and export reports"]:::container
+    web["Web Report Page<br/>[Java 25 HTTP Server & HTML]<br/>Serves branch-scoped sales reports to branch managers"]:::container
+  end
+
+  pos -- "uploads daily CSV files [SFTP]" --> landing
+  ingest -- "reads daily CSV files [file system]" --> landing
+  ingest -- "writes validated data and logs [file system]" --> store
+
+  engine -- "reads validated transactions [file system]" --> store
+  engine -- "writes generated reports [file system]" --> store
+  engine -- "sends report-ready e-mail [SMTP]" --> mail
+  mail -- "delivers notification to [SMTP]" --> director
+
+  analyst -- "views and exports reports [GUI]" --> desktop
+  desktop -- "reads reports [file system]" --> store
+
+  manager -- "views own branch report [HTTPS]" --> web
+  web -- "reads branch reports [file system]" --> store
+
+  classDef person fill:#08427b,color:#ffffff,stroke:#052e56
+  classDef system fill:#1168bd,color:#ffffff,stroke:#0b4884
+  classDef container fill:#438dd5,color:#ffffff,stroke:#2e6295
+  classDef db fill:#255b96,color:#ffffff,stroke:#1a416c
+  classDef external fill:#8a8a8a,color:#ffffff,stroke:#6b6b6b
+
+  style boundary stroke-dasharray: 5 5,fill:none,stroke:#444444,stroke-width:2px

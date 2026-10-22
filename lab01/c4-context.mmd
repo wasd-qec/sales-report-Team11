@@ -1,14 +1,18 @@
 flowchart TB
-  analyst["Analyst<br/>[Person]<br/>head office"]:::person
-  manager["Branch manager<br/>[Person]<br/>PNH, REP, BTB"]:::person
-  sys["Monthly Sales Report System<br/>[Software System]<br/>ingests branch sales, produces monthly reports"]:::system
-  pos["Branch POS systems<br/>[External system, x3]"]:::external
-  mail["E-mail service<br/>[External system]"]:::external
+  analyst["Analyst<br/>[Person]<br/>Head office: views and exports monthly sales reports"]:::person
+  manager["Branch manager<br/>[Person]<br/>Branch (PNH, REP, BTB): views own branch report"]:::person
+  director["Finance director<br/>[Person]<br/>Head office: receives report-ready notifications"]:::person
+
+  sys["Monthly Sales Report System<br/>[Software System]<br/>Ingests branch daily sales, aggregates metrics, and produces monthly reports"]:::system
+
+  pos["Branch POS systems<br/>[External system, x3]<br/>Exports daily sales transactions CSV"]:::external
+  mail["E-mail service<br/>[External system]<br/>Corporate SMTP mail service"]:::external
 
   analyst -- "views and exports reports" --> sys
   manager -- "views own branch report" --> sys
   pos -- "uploads daily CSV files [SFTP]" --> sys
   sys -- "sends report-ready e-mail [SMTP]" --> mail
+  mail -- "delivers notification to [SMTP]" --> director
 
   classDef person fill:#08427b,color:#ffffff,stroke:#052e56
   classDef system fill:#1168bd,color:#ffffff,stroke:#0b4884
