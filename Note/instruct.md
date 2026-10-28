@@ -31,13 +31,15 @@ git switch -c lab-01
 mkdir -p lab01/adr tools
 printf 'target/\ndata/\n' > .gitignore
 ```
+
 3. **Read the case-study brief.** Everything this lab needs is here; later labs repeat what they need.
 
  Case-study brief: Angkor Mart monthly sales report
+
 - **Company**: **Angkor Mart**, a fictional retail chain with three branches: `PNH` (Phnom Penh), `REP` (Siem Reap), `BTB` (Battambang). Head office (in Phnom Penh) needs a **monthly sales report** per branch and for the whole chain.
 - **Input files**: Each branch's point-of-sale (POS) system exports one CSV file per day: `data/<yyyy-MM>/<BRANCH>-<yyyy-MM-dd>.csv`, UTF-8, header row, comma separated, no quoting (product names contain no commas).
- Header: `branch,date,receipt_no,sku,product_name,category,quantity,unit_price,discount,payment_method`
- Example: `PNH,2026-09-01,PNH-000123,SKU-1001,Jasmine Rice 5kg,Grocery,2,6.50,0.00,KHQR`
+  Header: `branch,date,receipt_no,sku,product_name,category,quantity,unit_price,discount,payment_method`
+  Example: `PNH,2026-09-01,PNH-000123,SKU-1001,Jasmine Rice 5kg,Grocery,2,6.50,0.00,KHQR`
 - **Values**: Categories: `Grocery`, `Beverages`, `Household`, `Personal Care`, `Electronics`, `Stationery`. Payment methods: `CASH`, `CARD`, `KHQR` (Cambodia's national QR payment standard). Currency USD. Quantity is a positive integer; a discount is never negative and never larger than the line total.
 - **Money rule**: Line revenue = `quantity × unit_price − discount`, computed with `BigDecimal`, scale 2, `RoundingMode.HALF_UP`. Never `double` or `float` for money.
 - **Report content**: Per branch and for the chain: total revenue, total discounts, number of receipts, average basket (revenue / receipts), revenue by category, top 10 products by revenue, revenue by payment method, month-over-month change, and anomalies (days more than 3 standard deviations from the branch's daily mean, and rows that fail validation). Output formats wanted: PDF and Excel for head office, a web page for branch managers.
@@ -45,16 +47,17 @@ printf 'target/\ndata/\n' > .gitignore
 - **Users**: Head-office analysts view and export all reports; branch managers may see their own branch only; the finance director receives an e-mail when a report is ready. The instructor plays the client and answers questions about numbers you need.
 - **Java names**: Maven `groupId` `edu.itc`, `artifactId` `sales-report`, root package `edu.itc.salesreport` with sub-packages `model`, `ingest`, `engine`, `render`, `ui` (later also `ipc`, `service`, `dsl`). Types: `record SaleTransaction(String branch, LocalDate date, String receiptNo, String sku, String productName, String category, int quantity, BigDecimal unitPrice, BigDecimal discount, PaymentMethod paymentMethod)` with `revenue()`; `enum PaymentMethod { CASH, CARD, KHQR }`; `record ProductTotal(String sku, String productName, BigDecimal revenue, long quantity)`; `record BranchSummary(String branch, BigDecimal revenue, BigDecimal discounts, long receipts, Map<String, BigDecimal> revenueByCategory, List<ProductTotal> topProducts, Map<PaymentMethod, BigDecimal> revenueByPayment)`; `record MonthlyReport(YearMonth month, List<BranchSummary> branches, BranchSummary chain, List<String> anomalies)`; interfaces `TransactionParser` (line → `SaleTransaction`, throws the checked `InvalidRowException`) and `ReportRenderer`. Keep these names identical: every later lab uses them.
 - **Repository**: One team repository, one Maven project `sales-report` (Java 25) at its root until Lab-09; written deliverables of lab NN go in `labNN/`; each lab ends with "Record what changed" in `labNN/README.md`.
+
 4. **Inputs.** Lab-01 is the first lab, so nothing comes from an earlier lab. If one of the items below is not available, use the fallback and carry on.
 
-| Input | Where | What you need from it | Fallback if missing |
-| --- | --- | --- | --- |
-| Team repository | GitHub, step 2 | every member can push to `lab-01` | One member creates it in a personal account and transfers it to the organisation later; history is preserved. |
-| JDK 25 and Maven 3.9 | your laptop or the lab machines | `java -version` shows 25 | Use the lab machines; do not lower the Java release in the POM. |
-| Sample data | `tools/SampleData.java`, step 5 | 15 CSV files in `data/2026-09/` with two invalid rows | Create `data/2026-09/PNH-2026-09-01.csv` by hand: the header plus the example row of the brief, repeated with other SKUs, plus one row with quantity `two`. |
-| Diagram tool | Mermaid or PlantUML | text source plus PNG export | Mermaid Live Editor in the browser needs no installation. |
-| Client answers | instructor, or the brief | numbers for response measures | Use the brief and state every assumption explicitly in the scenario. |
-5. **Generate the sample data.** Save this single-file program as `tools/SampleData.java` and run it from the repository root with `java tools/SampleData.java` (JDK 25 runs a source file directly; the unnamed class with an instance `main` is standard Java 25). The seed makes the data identical for every team.
+| Input                                                                                                                                                                                                                                                                                                                              | Where                             | What you need from it                                   | Fallback if missing                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Team repository                                                                                                                                                                                                                                                                                                                    | GitHub, step 2                    | every member can push to `lab-01`                     | One member creates it in a personal account and transfers it to the organisation later; history is preserved.                                                   |
+| JDK 25 and Maven 3.9                                                                                                                                                                                                                                                                                                               | your laptop or the lab machines   | `java -version` shows 25                              | Use the lab machines; do not lower the Java release in the POM.                                                                                                 |
+| Sample data                                                                                                                                                                                                                                                                                                                        | `tools/SampleData.java`, step 5 | 15 CSV files in `data/2026-09/` with two invalid rows | Create `data/2026-09/PNH-2026-09-01.csv` by hand: the header plus the example row of the brief, repeated with other SKUs, plus one row with quantity `two`. |
+| Diagram tool                                                                                                                                                                                                                                                                                                                       | Mermaid or PlantUML               | text source plus PNG export                             | Mermaid Live Editor in the browser needs no installation.                                                                                                       |
+| Client answers                                                                                                                                                                                                                                                                                                                     | instructor, or the brief          | numbers for response measures                           | Use the brief and state every assumption explicitly in the scenario.                                                                                            |
+| 5. **Generate the sample data.** Save this single-file program as `tools/SampleData.java` and run it from the repository root with `java tools/SampleData.java` (JDK 25 runs a source file directly; the unnamed class with an instance `main` is standard Java 25). The seed makes the data identical for every team. |                                   |                                                         |                                                                                                                                                                 |
 
 ```java
 import java.io.IOException;
@@ -134,6 +137,7 @@ branch,date,receipt_no,sku,product_name,category,quantity,unit_price,discount,pa
 PNH,2026-09-01,PNH-000001,SKU-2002,Iced Coffee Can,Beverages,3,0.90,0.00,KHQR
 PNH,2026-09-01,PNH-000002,SKU-3002,Laundry Powder 1kg,Household,3,2.95,0.00,KHQR
 ```
+
 6. **Deliverables of this lab** (commit all of them on `lab-01`):
 
 ```plaintext
@@ -198,7 +202,9 @@ flowchart LR
 ```
 
 ## Architectural drivers
+
 QA-?, QA-?, QA-?
+
 ```
 
 ### Expected output
@@ -977,22 +983,29 @@ flowchart LR
   files[(Landing zone)] --> batch[Report batch: ingest, engine, render]
   batch --> store[(Report store)]
 ```
+
 ### B: process pipeline
+
 ### C: event-driven microservices
 
 ## Scenario analysis
-| Scenario | A | B | C |
-|----------|---|---|---|
-| QA-1 ... | ++ because ... | | |
+
+| Scenario | A              | B | C |
+| -------- | -------------- | - | - |
+| QA-1 ... | ++ because ... |   |   |
 
 ## QA-1 estimates (assumptions first)
 
 ## Sensitivity points
-- S1: <parameter> affects <attribute> in candidates <..>: ...
+
+- S1: <parameter></parameter> affects <attribute></attribute> in candidates <..>: ...
 
 ## Trade-off points
+
 ## Risks, non-risks, risk themes
+
 ## Recommendation
+
 ```
 
 ### Expected output (excerpt, with example assumptions)
@@ -1033,16 +1046,16 @@ Trade-off point T1: a broker between ingest and aggregation buffers late files
 
 ## Grading rubric
 
-| Component | Points | Full marks when… |
-| --- | --- | --- |
-| Task 1 · Quality-attribute scenarios | 15 | Six complete scenarios with measurable, method-backed response measures; justified ranks; a utility tree naming the drivers. |
-| Task 2 · C4 diagrams | 15 | Context and container diagrams at the right level, labelled arrows with protocols, sources and PNGs committed, notes linking containers to QA ids. |
-| Task 3 · Project, model, parser | 25 | Canonical names and components, invariants in the compact constructor, `BigDecimal` money, at least 8 invalid-row cases, all tests green. |
-| Task 4 · Strategy, Observer, review | 20 | Sealed renderer hierarchy with three strategies and tests; observable `MonthLoader` with unsubscribe; dependency rules test; review with Ca, Ce, I arithmetic. |
-| Task 5 · ADRs and README | 15 | Two argued ADRs with alternatives, negative consequences, failure policy and a visible peer review; complete `lab01/README.md` and tag. |
-| Code, diagram and history quality | 10 | Readable code and diagrams; small commits with clear messages; both members visible in `git log`. |
-| ★ Challenge (extra credit) | +20 | Complete ATAM-style analysis: sketches, reasoned table, QA-1 arithmetic, sensitivity and trade-off points, risk themes, consistent recommendation. |
-| Total | 100 (+20) |  |
+| Component                             | Points    | Full marks when…                                                                                                                                                |
+| ------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task 1 · Quality-attribute scenarios | 15        | Six complete scenarios with measurable, method-backed response measures; justified ranks; a utility tree naming the drivers.                                     |
+| Task 2 · C4 diagrams                 | 15        | Context and container diagrams at the right level, labelled arrows with protocols, sources and PNGs committed, notes linking containers to QA ids.               |
+| Task 3 · Project, model, parser      | 25        | Canonical names and components, invariants in the compact constructor, `BigDecimal` money, at least 8 invalid-row cases, all tests green.                      |
+| Task 4 · Strategy, Observer, review  | 20        | Sealed renderer hierarchy with three strategies and tests; observable `MonthLoader` with unsubscribe; dependency rules test; review with Ca, Ce, I arithmetic. |
+| Task 5 · ADRs and README             | 15        | Two argued ADRs with alternatives, negative consequences, failure policy and a visible peer review; complete `lab01/README.md` and tag.                        |
+| Code, diagram and history quality     | 10        | Readable code and diagrams; small commits with clear messages; both members visible in `git log`.                                                              |
+| ★ Challenge (extra credit)           | +20       | Complete ATAM-style analysis: sketches, reasoned table, QA-1 arithmetic, sensitivity and trade-off points, risk themes, consistent recommendation.               |
+| Total                                 | 100 (+20) |                                                                                                                                                                  |
 
 > [!NOTE]
 > **Automatic deductions:** −10 if any money value is a `double` or `float` · −10 if `mvn -q verify` fails on a clean clone of branch `lab-01` · −5 per quality-attribute scenario without a measurable response measure · −5 if `model` imports another project package, or `DependencyRulesTest` is removed or disabled · −5 per ADR without real alternatives or without a negative consequence · −5 if a C4 diagram mixes levels (classes or packages in a context or container diagram) · −5 if a canonical type, package or component name differs from the case-study brief.
@@ -1070,6 +1083,7 @@ sales-report-<team>/
 └── lab01/    README.md, quality-scenarios.md, c4-*.mmd/.png, design-review.md,
               adr/0001-*.md, adr/0002-*.md, atam.md (challenge)
 ```
+
 2. Self-check from a clean clone: `git clone … && cd sales-report-<team> && git switch lab-01 && mvn -q verify` prints nothing and exits with code 0; `java tools/SampleData.java && mvn -q compile exec:java` prints the progress lines of Task 4.
 3. Work on branch `lab-01`, open a pull request titled `Lab-01 – <team name>` against `main`, request a review from the instructor, and push the tag `lab-01`. Do not merge before the review.
 
