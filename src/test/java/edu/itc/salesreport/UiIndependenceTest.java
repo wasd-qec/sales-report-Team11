@@ -12,7 +12,7 @@ class UiIndependenceTest {
     @Test
     void modelIngestEngineAndToolkitFreeUiDoNotImportJavaFx() throws IOException {
         var sourceRoot = Path.of("src", "main", "java", "edu", "itc", "salesreport");
-        for (String packageName : List.of("model", "ingest", "engine", "ui")) {
+        for (String packageName : List.of("model", "ingest", "engine", "ui", "ui/mvp")) {
             var packageDirectory = sourceRoot.resolve(packageName);
             try (var files = Files.list(packageDirectory)) {
                 for (var source : files.filter(path -> path.toString().endsWith(".java")).toList()) {
