@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab-02 · Model View Controller (MVC) design pattern</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+<style>
+  html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
+  body { padding-top: 4rem; }
+  .sidebar { position: sticky; top: 4.5rem; max-height: calc(100vh - 5rem); overflow-y: auto; }
+  .sidebar .nav-link { padding: .35rem .75rem; border-left: 3px solid transparent; font-size: .9rem; }
+  .sidebar .nav-link.active { border-left-color: var(--bs-primary); font-weight: 600; }
+  .task { scroll-margin-top: 4.5rem; }
+  .task-header { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; }
+  .task-number { width: 2.6rem; height: 2.6rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; }
+  pre { position: relative; margin: 0; border-radius: .5rem; overflow: hidden; }
+  pre code.hljs { padding: 1rem 1.1rem; font-size: .84rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .copy-btn { position: absolute; top: .4rem; right: .4rem; opacity: 0; transition: opacity .2s; font-size: .7rem; padding: .15rem .45rem; }
+  pre:hover .copy-btn { opacity: 1; }
+  .hint-btn { text-decoration: none; }
+  .check-list .form-check { padding: .35rem 0 .35rem 1.8rem; border-bottom: 1px dashed var(--bs-border-color); }
+  .check-list .form-check:last-child { border-bottom: 0; }
+  .check-list input:checked + label { text-decoration: line-through; opacity: .6; }
+  .progress { height: .5rem; }
+  .step-list li { margin-bottom: .4rem; }
+  pre.mermaid { background: transparent; text-align: center; overflow: visible; }
+  pre.mermaid svg { max-width: 100%; height: auto; }
+  svg.fig { width: 100%; height: auto; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .f-box2  { fill: var(--bs-secondary-bg); stroke: var(--bs-border-color); stroke-width: 1.5; }
+  .f-pri   { fill: rgba(13,110,253,.18); stroke: var(--bs-primary); stroke-width: 1.5; }
+  .f-suc   { fill: rgba(25,135,84,.18);  stroke: var(--bs-success); stroke-width: 1.5; }
+  .f-warn  { fill: rgba(255,193,7,.18);  stroke: var(--bs-warning); stroke-width: 1.5; }
+  .f-dan   { fill: rgba(220,53,69,.18);  stroke: var(--bs-danger);  stroke-width: 1.5; }
+  .f-txt-s { fill: var(--bs-body-color); font-size: 11px; }
+  .f-txt-b { fill: var(--bs-body-color); font-size: 13px; font-weight: 600; }
+  .f-mut   { fill: var(--bs-secondary-color); font-size: 11px; }
+  .f-line  { stroke: var(--bs-body-color); stroke-width: 1.5; fill: none; }
+  .f-line-s{ stroke: var(--bs-success); stroke-width: 2; fill: none; }
+  .f-line-d{ stroke: var(--bs-danger); stroke-width: 2; fill: none; }
+  .f-dash  { stroke-dasharray: 5 4; }
+  @media print { .sidebar, .navbar, .copy-btn, .btn-theme { display: none !important; } body { padding-top: 0; } .collapse { display: block !important; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5 0 10z" style="fill:var(--bs-body-color)"/></marker>
+    <marker id="arr-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5 0 10z" style="fill:var(--bs-success)"/></marker>
+    <marker id="arr-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5 0 10z" style="fill:var(--bs-danger)"/></marker>
+  </defs>
+</svg>
+
+<nav class="navbar navbar-expand-lg fixed-top border-bottom bg-body-tertiary">
+  <div class="container-xl">
+    <a class="navbar-brand fw-semibold" href="#top"><i class="bi bi-flask text-success"></i> Lab-02 · Model View Controller (MVC) design pattern</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav" aria-controls="topNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="topNav">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+        <li class="nav-item"><a class="nav-link" href="Chapter-02.html"><i class="bi bi-easel"></i> Chapter slides</a></li>
+        <li class="nav-item"><a class="nav-link" href="#setup">Setup</a></li>
+        <li class="nav-item"><a class="nav-link" href="#rubric">Rubric</a></li>
+        <li class="nav-item"><a class="nav-link" href="#submission">Submission</a></li>
+        <li class="nav-item"><button class="btn btn-sm btn-outline-secondary btn-theme" id="btnTheme" title="Toggle light/dark"><i class="bi bi-circle-half"></i></button></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-xl" id="top">
+  <div class="row g-4">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="col-lg-3 d-none d-lg-block">
+      <div class="sidebar">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold">Your progress</span><span id="progressText">0 / 0</span></div>
+          <div class="progress"><div class="progress-bar bg-success" id="progressBar" style="width:0%"></div></div>
+          <button class="btn btn-link btn-sm p-0 mt-1 text-secondary" id="resetProgress">Reset checklist</button>
+        </div>
+        <nav class="nav flex-column" id="sideNav">
+          <a class="nav-link" href="#setup">0 · Setup</a>
+          <a class="nav-link" href="#task1">1 · Observable model</a>
+          <a class="nav-link" href="#task2">2 · Table and chart view</a>
+          <a class="nav-link" href="#task3">3 · Controller and validation</a>
+          <a class="nav-link" href="#task4">4 · Tests and a fat controller</a>
+          <a class="nav-link" href="#task5">5 · MVP variant</a>
+          <a class="nav-link" href="#challenge">★ Challenge · Spring MVC web view</a>
+          <a class="nav-link" href="#rubric">Grading rubric</a>
+          <a class="nav-link" href="#submission">Submission</a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="col-lg-9">
+
+      <header class="mb-4">
+        <p class="text-uppercase small text-secondary mb-1" style="letter-spacing:.12em">Software Engineering Concepts · Chapter 02</p>
+        <h1 class="fw-bold">Lab-02: Model View Controller (MVC) design pattern</h1>
+        <p class="lead">Your team builds the first piece of running code of the Angkor Mart monthly sales system: a JavaFX report viewer in MVC. Task 1 writes an observable, toolkit-free <code>SalesModel</code> over the branch CSV files; Task 2 adds a table and chart view; Task 3 a controller with branch and month filters and input validation; Task 4 tests model and controller without a screen and refactors a fat controller; Task 5 builds an MVP variant and compares the two. The challenge puts a Spring MVC web page on the same, unchanged model.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge text-bg-primary">JavaFX 25.0.4</span>
+          <span class="badge text-bg-success">Spring Boot 4.1.1 (challenge)</span>
+          <span class="badge text-bg-secondary">JDK 25 · Maven 3.9 · JUnit 6.1</span>
+          <span class="badge text-bg-secondary">≈ 6 hours, pairs</span>
+          <span class="badge text-bg-success">5 tasks + 1 challenge</span>
+        </div>
+      </header>
+
+      <div class="alert alert-info d-flex gap-2">
+        <i class="bi bi-info-circle-fill fs-5"></i>
+        <div><strong>How to work through this lab.</strong> Do the tasks in order; each builds on the previous. Read the <em>Goal</em>, follow the <em>Steps</em>, compare with the <em>Expected output</em>, and tick the <em>Acceptance checklist</em> (saved in your browser). Open a hint only when stuck for more than 10 minutes. Work in pairs: alternate who types per task, and commit under your own name so each person's contribution is visible in the Git history.</div>
+      </div>
+
+      <!-- ===================== SETUP ===================== -->
+      <section class="task card mb-4" id="setup">
+        <div class="card-header task-header">
+          <span class="task-number text-bg-secondary">0</span>
+          <h2 class="h4 mb-0">Setup</h2>
+          <span class="badge text-bg-light ms-auto">30 min</span>
+        </div>
+        <div class="card-body">
+          <ol class="step-list">
+            <li><strong>Tools.</strong> Verify the JDK and Maven. JavaFX itself needs no installation: Maven downloads the OpenJFX jars with the right platform classifier (<code>win</code>, <code>linux</code>, <code>mac</code>).
+<pre><code class="language-bash">java -version     # openjdk version "25.0.x" ... LTS
+mvn -v            # Apache Maven 3.9.16, Java version: 25.0.x
+git --version</code></pre>
+              <div class="alert alert-warning small mt-2 mb-0"><i class="bi bi-display"></i> <strong>Desktop session required for the window, not for the tests.</strong> <code>mvn javafx:run</code> opens a window, so run it on Windows, macOS or a Linux desktop (X11 or Wayland). Over SSH, in WSL without WSLg or in CI it fails with "Unable to open DISPLAY"; <code>mvn test</code> and <code>mvn verify</code> work everywhere because no test starts JavaFX.</div>
+            </li>
+            <li><strong>Case-study brief.</strong> Everything this lab needs to know about the system:
+              <div class="card mt-2 mb-1" id="case-brief">
+                <div class="card-header fw-semibold"><i class="bi bi-journal-text"></i> Case-study brief: Angkor Mart monthly sales report</div>
+                <div class="card-body small">
+                  <dl class="row mb-0">
+                    <dt class="col-sm-3 col-lg-2">Company</dt>
+                    <dd class="col-sm-9 col-lg-10">Angkor Mart, a fictional retail chain with three branches: <code>PNH</code> (Phnom Penh), <code>REP</code> (Siem Reap), <code>BTB</code> (Battambang). Head office needs a monthly sales report per branch and for the chain, viewed on a desktop and later on a web page.</dd>
+                    <dt class="col-sm-3 col-lg-2">Data files</dt>
+                    <dd class="col-sm-9 col-lg-10">One CSV per branch and day: <code>data/&lt;yyyy-MM&gt;/&lt;BRANCH&gt;-&lt;yyyy-MM-dd&gt;.csv</code>, UTF-8, header row, comma separated.</dd>
+                    <dt class="col-sm-3 col-lg-2">Row format</dt>
+                    <dd class="col-sm-9 col-lg-10">Header <code>branch,date,receipt_no,sku,product_name,category,quantity,unit_price,discount,payment_method</code>; example <code>PNH,2026-09-01,PNH-000123,SKU-1001,Jasmine Rice 5kg,Grocery,2,6.50,0.00,KHQR</code>. Categories <code>Grocery</code>, <code>Beverages</code>, <code>Household</code>, <code>Personal Care</code>, <code>Electronics</code>, <code>Stationery</code>. Payment <code>CASH</code>, <code>CARD</code>, <code>KHQR</code> (Cambodia's national QR payment standard). Currency USD.</dd>
+                    <dt class="col-sm-3 col-lg-2">Rules</dt>
+                    <dd class="col-sm-9 col-lg-10">Line revenue = <code>quantity × unit_price − discount</code> with <code>BigDecimal</code>, scale 2, <code>RoundingMode.HALF_UP</code>. A row is invalid when a field is missing or unparsable, the branch or category is unknown, quantity ≤ 0, an amount is negative, or the discount exceeds <code>quantity × unit_price</code>; invalid rows are reported, never summed.</dd>
+                    <dt class="col-sm-3 col-lg-2">Figures in this lab</dt>
+                    <dd class="col-sm-9 col-lg-10">Per branch or for the chain (<code>ALL</code>): total revenue, total discounts, number of receipts (distinct <code>receipt_no</code>), average basket (revenue / receipts), revenue by category, top 10 products by revenue, revenue by payment method, rejected rows. Month-over-month change and anomaly detection come in later labs.</dd>
+                    <dt class="col-sm-3 col-lg-2">Java names</dt>
+                    <dd class="col-sm-9 col-lg-10">Maven <code>edu.itc:sales-report</code>, root package <code>edu.itc.salesreport</code> with <code>model</code>, <code>ingest</code>, <code>engine</code>, <code>ui</code>. Types: <code>SaleTransaction</code> (record with <code>revenue()</code>), <code>PaymentMethod</code>, <code>ProductTotal</code>, <code>BranchSummary</code>, <code>TransactionParser</code> + <code>InvalidRowException</code>, <code>SalesAggregator</code>, <code>SalesDataGenerator</code>. Keep these names: later labs build on them.</dd>
+                    <dt class="col-sm-3 col-lg-2">Repository</dt>
+                    <dd class="col-sm-9 col-lg-10">One team repository with the Maven project <code>sales-report</code> at its root (Labs 02 to 08 extend it) and one folder per lab for written deliverables (<code>lab02/</code>).</dd>
+                  </dl>
+                </div>
+              </div>
+            </li>
+            <li><strong>Inputs from earlier labs.</strong> This is the first code lab. If a Lab-01 item is missing, use the fallback and carry on.
+              <div class="table-responsive mt-2">
+                <table class="table table-sm table-bordered small align-middle">
+                  <thead class="table-active"><tr><th>Input</th><th>Where</th><th>What you need from it</th><th>Fallback if missing</th></tr></thead>
+                  <tbody>
+                    <tr><td>Team repository and roles</td><td>Lab-01, <code>README.md</code></td><td>A repository with every member as collaborator</td><td>Create <code>sales-report-&lt;team&gt;</code> now and invite everyone.</td></tr>
+                    <tr><td>Quality-attribute scenarios</td><td>Lab-01 (<code>lab01/</code>)</td><td>A testability and a modifiability scenario to cite in Task 5</td><td>Write two one-line scenarios in <code>lab02/README.md</code>, e.g. "a new chart type is added in under a day without touching parsing".</td></tr>
+                    <tr><td>C4 container diagram</td><td>Lab-01 (<code>lab01/</code>)</td><td>The name of the desktop viewer container</td><td>Call it "Report viewer (JavaFX desktop)".</td></tr>
+                    <tr><td>ADR template</td><td>Lab-01 (<code>lab01/</code>)</td><td>Format for the MVC-or-MVP decision in Task 5</td><td>Title, Status, Context, Decision, Consequences.</td></tr>
+                    <tr><td>Domain types, parser, sample data</td><td>none yet</td><td>Canonical records, <code>CsvTransactionParser</code>, <code>SalesDataGenerator</code></td><td>Copy the starter kit in step 5 (tested code).</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+            <li><strong>Project.</strong> Create <code>pom.xml</code> at the repository root. JavaFX is <code>optional</code> so that projects reusing the domain (the challenge) do not inherit it; <code>javafx.mainClass</code> is a property so you can start another class from the command line.
+<pre><code class="language-xml">&lt;project xmlns="http://maven.apache.org/POM/4.0.0"&gt;
+  &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+  &lt;groupId&gt;edu.itc&lt;/groupId&gt;
+  &lt;artifactId&gt;sales-report&lt;/artifactId&gt;
+  &lt;version&gt;0.2.0-SNAPSHOT&lt;/version&gt;
+
+  &lt;properties&gt;
+    &lt;maven.compiler.release&gt;25&lt;/maven.compiler.release&gt;
+    &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+    &lt;javafx.version&gt;25.0.4&lt;/javafx.version&gt;
+    &lt;!-- override on the command line: -Djavafx.mainClass=... --&gt;
+    &lt;javafx.mainClass&gt;edu.itc.salesreport.ui.fx.ReportApp&lt;/javafx.mainClass&gt;
+  &lt;/properties&gt;
+
+  &lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+      &lt;dependency&gt;
+        &lt;groupId&gt;org.junit&lt;/groupId&gt;
+        &lt;artifactId&gt;junit-bom&lt;/artifactId&gt;
+        &lt;version&gt;6.1.3&lt;/version&gt;
+        &lt;type&gt;pom&lt;/type&gt;
+        &lt;scope&gt;import&lt;/scope&gt;
+      &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+  &lt;/dependencyManagement&gt;
+
+  &lt;dependencies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.openjfx&lt;/groupId&gt;
+      &lt;artifactId&gt;javafx-controls&lt;/artifactId&gt;
+      &lt;version&gt;${javafx.version}&lt;/version&gt;
+      &lt;optional&gt;true&lt;/optional&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.openjfx&lt;/groupId&gt;
+      &lt;artifactId&gt;javafx-fxml&lt;/artifactId&gt;
+      &lt;version&gt;${javafx.version}&lt;/version&gt;
+      &lt;optional&gt;true&lt;/optional&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.junit.jupiter&lt;/groupId&gt;
+      &lt;artifactId&gt;junit-jupiter&lt;/artifactId&gt;
+      &lt;scope&gt;test&lt;/scope&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+
+  &lt;build&gt;
+    &lt;plugins&gt;
+      &lt;plugin&gt;
+        &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+        &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;
+        &lt;version&gt;3.15.0&lt;/version&gt;
+      &lt;/plugin&gt;
+      &lt;plugin&gt;
+        &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+        &lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;
+        &lt;version&gt;3.5.6&lt;/version&gt;
+      &lt;/plugin&gt;
+      &lt;plugin&gt;
+        &lt;groupId&gt;org.openjfx&lt;/groupId&gt;
+        &lt;artifactId&gt;javafx-maven-plugin&lt;/artifactId&gt;
+        &lt;version&gt;0.0.8&lt;/version&gt;
+        &lt;configuration&gt;
+          &lt;mainClass&gt;${javafx.mainClass}&lt;/mainClass&gt;
+          &lt;options&gt;
+            &lt;option&gt;--enable-native-access=javafx.graphics&lt;/option&gt;
+          &lt;/options&gt;
+        &lt;/configuration&gt;
+      &lt;/plugin&gt;
+    &lt;/plugins&gt;
+  &lt;/build&gt;
+&lt;/project&gt;</code></pre>
+            </li>
+            <li><strong>Starter kit</strong> (the canonical domain types, the parser and the sample-data generator). Copy these files unchanged; they are tested and later labs rely on them.
+              <p class="mt-2 mb-1"><a class="hint-btn" data-bs-toggle="collapse" href="#kitModel" role="button"><i class="bi bi-file-earmark-code"></i> Show <code>model/</code>: <code>PaymentMethod</code>, <code>SaleTransaction</code>, <code>ProductTotal</code>, <code>BranchSummary</code></a></p>
+              <div class="collapse" id="kitModel">
+<pre><code class="language-java">// src/main/java/edu/itc/salesreport/model/PaymentMethod.java
+package edu.itc.salesreport.model;
+
+public enum PaymentMethod { CASH, CARD, KHQR }
+
+// src/main/java/edu/itc/salesreport/model/SaleTransaction.java
+package edu.itc.salesreport.model;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+
+/** One CSV line of a branch's daily export. */
+public record SaleTransaction(String branch, LocalDate date, String receiptNo,
+        String sku, String productName, String category, int quantity,
+        BigDecimal unitPrice, BigDecimal discount, PaymentMethod paymentMethod) {
+
+    /** quantity x unit price - discount, scale 2, HALF_UP. */
+    public BigDecimal revenue() {
+        return unitPrice.multiply(BigDecimal.valueOf(quantity))
+                .subtract(discount)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+}
+
+// src/main/java/edu/itc/salesreport/model/ProductTotal.java
+package edu.itc.salesreport.model;
+
+import java.math.BigDecimal;
+
+public record ProductTotal(String sku, String productName,
+        BigDecimal revenue, long quantity) {}
+
+// src/main/java/edu/itc/salesreport/model/BranchSummary.java
+package edu.itc.salesreport.model;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+public record BranchSummary(String branch, BigDecimal revenue,
+        BigDecimal discounts, long receipts,
+        Map&lt;String, BigDecimal&gt; revenueByCategory,
+        List&lt;ProductTotal&gt; topProducts,
+        Map&lt;PaymentMethod, BigDecimal&gt; revenueByPayment) {
+
+    public BranchSummary {
+        revenueByCategory = Collections.unmodifiableMap(
+                new TreeMap&lt;&gt;(revenueByCategory));
+        topProducts = List.copyOf(topProducts);
+        var byPayment = new EnumMap&lt;PaymentMethod, BigDecimal&gt;(PaymentMethod.class);
+        byPayment.putAll(revenueByPayment);
+        revenueByPayment = Collections.unmodifiableMap(byPayment);
+    }
+
+    /** Revenue per receipt, 0.00 when there are no receipts. */
+    public BigDecimal averageBasket() {
+        return receipts == 0
+                ? BigDecimal.ZERO.setScale(2)
+                : revenue.divide(BigDecimal.valueOf(receipts), 2,
+                        RoundingMode.HALF_UP);
+    }
+}</code></pre>
+              </div>
+              <p class="mt-2 mb-1"><a class="hint-btn" data-bs-toggle="collapse" href="#kitIngest" role="button"><i class="bi bi-file-earmark-code"></i> Show <code>ingest/</code>: <code>InvalidRowException</code>, <code>TransactionParser</code>, <code>CsvTransactionParser</code></a></p>
+              <div class="collapse" id="kitIngest">
+<pre><code class="language-java">// src/main/java/edu/itc/salesreport/ingest/InvalidRowException.java
+package edu.itc.salesreport.ingest;
+
+/** A CSV line that does not satisfy the canonical format. */
+public class InvalidRowException extends Exception {
+    private final String line;
+
+    public InvalidRowException(String reason, String line) {
+        super(reason);
+        this.line = line;
+    }
+
+    public String line() { return line; }
+}
+
+// src/main/java/edu/itc/salesreport/ingest/TransactionParser.java
+package edu.itc.salesreport.ingest;
+
+import edu.itc.salesreport.model.SaleTransaction;
+
+@FunctionalInterface
+public interface TransactionParser {
+    SaleTransaction parse(String line) throws InvalidRowException;
+}
+
+// src/main/java/edu/itc/salesreport/ingest/CsvTransactionParser.java
+package edu.itc.salesreport.ingest;
+
+import edu.itc.salesreport.model.PaymentMethod;
+import edu.itc.salesreport.model.SaleTransaction;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Set;
+
+/** The canonical parser for one line of a branch CSV file. */
+public final class CsvTransactionParser implements TransactionParser {
+    public static final String HEADER = "branch,date,receipt_no,sku,"
+            + "product_name,category,quantity,unit_price,discount,"
+            + "payment_method";
+    public static final Set&lt;String&gt; BRANCHES = Set.of("PNH", "REP", "BTB");
+    public static final Set&lt;String&gt; CATEGORIES = Set.of("Grocery",
+            "Beverages", "Household", "Personal Care", "Electronics",
+            "Stationery");
+
+    @Override
+    public SaleTransaction parse(String line) throws InvalidRowException {
+        String[] f = line.split(",", -1);
+        if (f.length != 10) {
+            throw new InvalidRowException(
+                    "expected 10 fields, found " + f.length, line);
+        }
+        try {
+            String branch = oneOf(f[0], BRANCHES, "branch", line);
+            LocalDate date = LocalDate.parse(f[1]);
+            String category = oneOf(f[5], CATEGORIES, "category", line);
+            int quantity = Integer.parseInt(f[6]);
+            var unitPrice = new BigDecimal(f[7]);
+            var discount = new BigDecimal(f[8]);
+            var payment = PaymentMethod.valueOf(f[9]);
+            if (quantity &lt;= 0) {
+                throw new InvalidRowException(
+                        "quantity must be positive: " + quantity, line);
+            }
+            if (unitPrice.signum() &lt; 0 || discount.signum() &lt; 0) {
+                throw new InvalidRowException("negative amount", line);
+            }
+            var gross = unitPrice.multiply(BigDecimal.valueOf(quantity));
+            if (discount.compareTo(gross) &gt; 0) {
+                throw new InvalidRowException(
+                        "discount exceeds line amount", line);
+            }
+            return new SaleTransaction(branch, date, f[2], f[3], f[4],
+                    category, quantity, unitPrice, discount, payment);
+        } catch (DateTimeParseException | IllegalArgumentException e) {
+            // NumberFormatException is an IllegalArgumentException
+            throw new InvalidRowException("bad value: " + e.getMessage(), line);
+        }
+    }
+
+    private static String oneOf(String value, Set&lt;String&gt; allowed,
+            String field, String line) throws InvalidRowException {
+        if (!allowed.contains(value)) {
+            throw new InvalidRowException(
+                    "unknown " + field + " '" + value + "'", line);
+        }
+        return value;
+    }
+}</code></pre>
+              </div>
+              <p class="mt-2 mb-1"><a class="hint-btn" data-bs-toggle="collapse" href="#kitGen" role="button"><i class="bi bi-file-earmark-code"></i> Show <code>ingest/SalesDataGenerator</code> (seeded sample data)</a></p>
+              <div class="collapse" id="kitGen">
+<pre><code class="language-java">// src/main/java/edu/itc/salesreport/ingest/SalesDataGenerator.java
+package edu.itc.salesreport.ingest;
+
+import edu.itc.salesreport.model.PaymentMethod;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+/** Seeded generator of small sample files: same seed, same files. */
+public final class SalesDataGenerator {
+    private record Product(String sku, String name, String category,
+            String price) {}
+
+    private static final List&lt;Product&gt; CATALOG = List.of(
+        new Product("SKU-1001", "Jasmine Rice 5kg", "Grocery", "6.50"),
+        new Product("SKU-1002", "Fish Sauce 700ml", "Grocery", "1.80"),
+        new Product("SKU-1003", "Palm Sugar 1kg", "Grocery", "2.40"),
+        new Product("SKU-2001", "Drinking Water 1.5L", "Beverages", "0.60"),
+        new Product("SKU-2002", "Iced Coffee 250ml", "Beverages", "0.90"),
+        new Product("SKU-2003", "Sugarcane Juice 1L", "Beverages", "1.60"),
+        new Product("SKU-3001", "Laundry Powder 2kg", "Household", "5.90"),
+        new Product("SKU-3002", "Dish Soap 500ml", "Household", "1.30"),
+        new Product("SKU-3003", "Mosquito Coil 10pc", "Household", "1.10"),
+        new Product("SKU-4001", "Toothpaste 150g", "Personal Care", "1.70"),
+        new Product("SKU-4002", "Shampoo 400ml", "Personal Care", "3.80"),
+        new Product("SKU-4003", "Sunscreen SPF50", "Personal Care", "7.50"),
+        new Product("SKU-5001", "USB-C Cable 1m", "Electronics", "3.50"),
+        new Product("SKU-5002", "Power Bank 10000mAh", "Electronics",
+                "18.90"),
+        new Product("SKU-5003", "LED Bulb 9W", "Electronics", "2.20"),
+        new Product("SKU-6001", "Notebook A5", "Stationery", "0.80"),
+        new Product("SKU-6002", "Ballpoint Pen 10pc", "Stationery", "1.50"),
+        new Product("SKU-6003", "Sticky Notes", "Stationery", "1.20"));
+    private static final List&lt;String&gt; BRANCHES = List.of("PNH", "REP", "BTB");
+
+    /** Writes one file per branch and day; returns the number of rows. */
+    public int generate(YearMonth month, int rowsPerDay, long seed,
+            Path dataDir) throws IOException {
+        var random = new Random(seed);
+        Path dir = Files.createDirectories(dataDir.resolve(month.toString()));
+        int total = 0;
+        for (String branch : BRANCHES) {
+            int receipt = 0;
+            for (int day = 1; day &lt;= month.lengthOfMonth(); day++) {
+                LocalDate date = month.atDay(day);
+                var lines = new ArrayList&lt;String&gt;();
+                lines.add(CsvTransactionParser.HEADER);
+                while (lines.size() &lt;= rowsPerDay) {
+                    receipt++;
+                    int items = 1 + random.nextInt(4);
+                    var pay = PaymentMethod.values()[random.nextInt(3)];
+                    for (int i = 0; i &lt; items &amp;&amp; lines.size() &lt;= rowsPerDay;
+                            i++) {
+                        var p = CATALOG.get(random.nextInt(CATALOG.size()));
+                        int qty = 1 + random.nextInt(3);
+                        String discount =
+                                random.nextInt(10) == 0 ? "0.50" : "0.00";
+                        lines.add(String.join(",", branch, date.toString(),
+                                "%s-%06d".formatted(branch, receipt),
+                                p.sku(), p.name(), p.category(),
+                                Integer.toString(qty), p.price(), discount,
+                                pay.name()));
+                    }
+                }
+                total += lines.size() - 1;
+                Files.write(dir.resolve(branch + "-" + date + ".csv"),
+                        lines, StandardCharsets.UTF_8);
+            }
+        }
+        return total;
+    }
+
+    public static void main(String[] args) throws IOException {
+        Path dataDir = Path.of(args.length &gt; 0 ? args[0] : "data");
+        var generator = new SalesDataGenerator();
+        for (String m : List.of("2026-08", "2026-09")) {
+            var month = YearMonth.parse(m);
+            int rows = generator.generate(month, 40,
+                    202600L + month.getMonthValue(), dataDir);
+            System.out.printf("%s: %d files, %d rows%n", month,
+                    3 * month.lengthOfMonth(), rows);
+        }
+    }
+}</code></pre>
+              </div>
+            </li>
+            <li><strong>Sample data.</strong> Generate two months (the generator is deterministic, so every team gets the same files and the same totals). Add <code>data/</code> to <code>.gitignore</code>: it is reproducible from the seed.
+<pre><code class="language-bash">mvn -q compile
+java -cp target/classes edu.itc.salesreport.ingest.SalesDataGenerator data
+# 2026-08: 93 files, 3720 rows
+# 2026-09: 90 files, 3600 rows
+head -3 data/2026-09/PNH-2026-09-01.csv
+# branch,date,receipt_no,sku,product_name,category,quantity,unit_price,discount,payment_method
+# PNH,2026-09-01,PNH-000001,SKU-4002,Shampoo 400ml,Personal Care,3,3.80,0.00,KHQR
+# PNH,2026-09-01,PNH-000001,SKU-2001,Drinking Water 1.5L,Beverages,2,0.60,0.00,KHQR</code></pre>
+            </li>
+            <li><strong>Target structure and deliverables.</strong> Packages marked <em>toolkit-free</em> must never import <code>javafx.*</code>, <code>java.awt.*</code> or <code>javax.swing.*</code> (Task 4 turns this into a test).
+<pre class="mermaid">
+flowchart TB
+  subgraph adapters["Toolkit adapters"]
+    fx["ui.fx: ReportView, ReportApp, FxReportScreen, ReportMvpApp"]
+    console["ui.console: ConsoleReportView"]
+  end
+  subgraph free["Toolkit-free"]
+    ui["ui: SalesModel, SalesEvent, ReportController, InputRules"]
+    mvp["ui.mvp: ReportPresenter, ReportScreen, RowItem"]
+    ingest["ingest: CsvTransactionParser, CsvMonthReader"]
+    engine["engine: DefaultSalesAggregator"]
+    model["model: SaleTransaction, BranchSummary"]
+  end
+  fx --> ui
+  fx --> mvp
+  console --> ui
+  mvp --> ui
+  ui --> ingest
+  ui --> engine
+  ingest --> model
+  engine --> model
+</pre>
+<pre><code class="language-plaintext">sales-report-&lt;team&gt;/
+├── pom.xml
+├── .gitignore                         # target/, data/
+├── src/main/java/edu/itc/salesreport/
+│   ├── model/  ingest/  engine/       # starter kit + Task 1
+│   └── ui/  ui/console/  ui/fx/  ui/mvp/  ui/fx/legacy/
+├── src/test/java/edu/itc/salesreport/ # Tasks 1, 4, 5
+└── lab02/
+    ├── README.md                      # Task 5: record what changed
+    ├── screenshots/mvc-viewer.png     # Task 2
+    ├── screenshots/validation.png     # Task 3
+    ├── refactoring.md                 # Task 4
+    ├── mvc-vs-mvp.md                  # Task 5
+    └── adr-002-presentation-pattern.md  # Task 5</code></pre>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ===================== TASK 1 ===================== -->
+      <section class="task card mb-4" id="task1">
+        <div class="card-header task-header">
+          <span class="task-number text-bg-primary">1</span>
+          <h2 class="h4 mb-0">An observable, toolkit-free model</h2>
+          <span class="badge text-bg-success">Easy</span>
+          <span class="badge text-bg-light ms-auto">60 min</span>
+        </div>
+        <div class="card-body">
+          <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+          <p>Write the M of MVC: <code>SalesModel</code> loads one month of branch CSV files through the canonical parser, computes a <code>BranchSummary</code> for the selected branch, and notifies listeners of every change. Prove it with a console view and unit tests, before any widget exists.</p>
+
+          <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+          <ol class="step-list">
+            <li>In <code>ingest</code>, create <code>record MonthData(YearMonth month, List&lt;SaleTransaction&gt; rows, List&lt;String&gt; rejected)</code> (defensive <code>List.copyOf</code>) and <code>CsvMonthReader(TransactionParser)</code> with <code>MonthData read(Path dataDir, YearMonth month) throws IOException</code>: list <code>dataDir/yyyy-MM/</code>, keep files matching <code>(PNH|REP|BTB)-\d{4}-\d{2}-\d{2}\.csv</code> sorted by name, skip each header line, collect <code>InvalidRowException</code>s as <code>"&lt;file&gt;:&lt;line&gt; &lt;reason&gt;"</code>. Throw <code>NoSuchFileException</code> when the month folder does not exist.</li>
+            <li>In <code>engine</code>, create <code>SalesAggregator</code> (<code>BranchSummary summarize(String branch, List&lt;SaleTransaction&gt; rows)</code>) and <code>DefaultSalesAggregator</code>: sum revenue and discounts, count distinct receipt numbers, revenue by category (<code>TreeMap</code>) and by payment (<code>EnumMap</code>), top 10 products by revenue (ties by SKU).</li>
+            <li>In <code>ui</code>, create the sealed <code>SalesEvent</code> (<code>MonthLoaded(month, rows, rejected)</code>, <code>BranchSelected(branch)</code>), the functional interface <code>SalesModelListener</code> and <code>SalesModel</code> from the starter. <code>selectBranch</code> fires only when the branch actually changes; a failed <code>load</code> leaves the old data in place and fires nothing.</li>
+            <li>Create <code>ui.console.ConsoleReportView</code>: it registers itself in its constructor and prints one line per event plus the summary (starter below). Run it and compare with the expected output.</li>
+            <li>Copy <code>TestData</code> into <code>src/test/java/edu/itc/salesreport/</code> and write <code>ui.SalesModelTest</code> with four tests: load fires <code>MonthLoaded(2026-09, 3, 1)</code> and the chain revenue is <code>52.00</code>; selecting <code>PNH</code> twice fires once and gives revenue and basket <code>31.00</code>; a load of <code>2026-07</code> throws <code>NoSuchFileException</code>, fires nothing and keeps 3 rows; a removed listener is not called.</li>
+            <li>Run <code>mvn test</code>. Commit as "Task 1: observable SalesModel" (each partner commits at least one of the classes).</li>
+          </ol>
+
+          <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+<pre><code class="language-java">// src/main/java/edu/itc/salesreport/ui/SalesModel.java
+package edu.itc.salesreport.ui;
+
+// imports: engine.SalesAggregator, ingest.CsvMonthReader, ingest.MonthData,
+// model.*, java.io.IOException, java.nio.file.Path, java.time.YearMonth,
+// java.util.*, java.util.concurrent.CopyOnWriteArrayList  (no javafx!)
+
+/** MVC model of the report viewer. Confined to one thread (the UI thread). */
+public final class SalesModel {
+    public static final String ALL = "ALL";
+
+    private final CsvMonthReader reader;
+    private final SalesAggregator aggregator;
+    private final List&lt;SalesModelListener&gt; listeners = new CopyOnWriteArrayList&lt;&gt;();
+    private MonthData data;            // null until the first successful load
+    private String branch = ALL;
+
+    public SalesModel(CsvMonthReader reader, SalesAggregator aggregator) {
+        this.reader = reader;
+        this.aggregator = aggregator;
+    }
+
+    public void addListener(SalesModelListener l) { listeners.add(l); }
+    public void removeListener(SalesModelListener l) { listeners.remove(l); }
+
+    /** Replaces the data; on failure the old state is kept. */
+    public void load(Path dataDir, YearMonth month) throws IOException {
+        // TODO read first, then assign, then fire MonthLoaded(month, rows, rejected)
+    }
+
+    public void selectBranch(String newBranch) {
+        // TODO ignore an unchanged branch (no event), else assign and fire
+    }
+
+    public String branch() { return branch; }
+
+    public Optional&lt;YearMonth&gt; month() {
+        return Optional.ofNullable(data).map(MonthData::month);
+    }
+
+    public List&lt;SaleTransaction&gt; visibleTransactions() {
+        // TODO List.of() before the first load; all rows for ALL;
+        //      otherwise only the rows of the selected branch
+        return List.of();
+    }
+
+    public BranchSummary summary() {
+        return aggregator.summarize(branch, visibleTransactions());
+    }
+
+    public List&lt;String&gt; rejectedRows() {
+        return data == null ? List.of() : data.rejected();
+    }
+
+    private void fire(SalesEvent event) {
+        for (var l : listeners) l.modelChanged(event);
+    }
+}
+
+// src/main/java/edu/itc/salesreport/ui/console/ConsoleReportView.java (core)
+@Override
+public void modelChanged(SalesEvent event) {
+    out.println(switch (event) {
+        case MonthLoaded(var month, var rows, var rejected) -&gt;
+            "Loaded %s: %d rows, %d rejected".formatted(month, rows, rejected);
+        case BranchSelected(var branch) -&gt; "Branch " + branch;
+    });
+    var s = model.summary();
+    out.printf("  %-4s revenue %9s  receipts %4d  basket %5s%n",
+            s.branch(), s.revenue(), s.receipts(), s.averageBasket());
+    s.revenueByCategory().forEach(
+            (cat, rev) -&gt; out.printf("    %-14s %9s%n", cat, rev));
+}
+// main: build the model, new ConsoleReportView(model, System.out),
+//       model.load(Path.of("data"), YearMonth.parse("2026-09")),
+//       model.selectBranch("PNH")
+
+// src/test/java/edu/itc/salesreport/TestData.java (copy as is)
+package edu.itc.salesreport;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+/** Two branch files for 2026-09: three valid rows, one invalid row. */
+public final class TestData {
+    public static final String HEADER = "branch,date,receipt_no,sku,"
+            + "product_name,category,quantity,unit_price,discount,"
+            + "payment_method";
+
+    private TestData() {}
+
+    public static Path writeSample(Path dataDir) throws IOException {
+        Path month = Files.createDirectories(dataDir.resolve("2026-09"));
+        Files.writeString(month.resolve("PNH-2026-09-01.csv"), """
+            %s
+            PNH,2026-09-01,PNH-000001,SKU-1001,Jasmine Rice 5kg,Grocery,2,6.50,0.00,KHQR
+            PNH,2026-09-01,PNH-000001,SKU-5002,Power Bank 10000mAh,Electronics,1,18.90,0.90,KHQR
+            PNH,2026-09-01,PNH-000002,SKU-2001,Drinking Water 1.5L,Beverages,-3,0.60,0.00,CASH
+            """.formatted(HEADER));
+        Files.writeString(month.resolve("REP-2026-09-01.csv"), """
+            %s
+            REP,2026-09-01,REP-000001,SKU-4003,Sunscreen SPF50,Personal Care,3,7.50,1.50,CASH
+            """.formatted(HEADER));
+        return dataDir;
+    }
+}</code></pre>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+<pre><code class="language-plaintext">$ java -cp target/classes edu.itc.salesreport.ui.console.ConsoleReportView data
+Loaded 2026-09: 3600 rows, 0 rejected
+  ALL  revenue  26721.90  receipts 1493  basket 17.90
+    Beverages        1131.40
+    Electronics     11173.40
+    Grocery          4114.30
+    Household        3404.90
+    Personal Care    5520.30
+    Stationery       1377.60
+Branch PNH
+  PNH  revenue   8455.90  receipts  489  basket 17.29
+    Beverages         402.30
+    Electronics      3404.50
+    Grocery          1281.80
+    Household        1094.40
+    Personal Care    1801.20
+    Stationery        471.70
+
+$ mvn test
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in edu.itc.salesreport.ui.SalesModelTest</code></pre>
+
+          <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint1" role="button"><i class="bi bi-lightbulb"></i> Show hints</a></p>
+          <div class="collapse" id="hint1">
+            <div class="card card-body bg-body-tertiary small">
+              <ul class="mb-0">
+                <li><code>Files.list</code> returns a stream that holds a directory handle: use it in try-with-resources, or Windows keeps the folder locked.</li>
+                <li>Assign <code>data</code> only after <code>reader.read</code> returned: if it throws, the assignment never happens and the model stays consistent.</li>
+                <li>A listener in a test can be a method reference: <code>model.addListener(events::add)</code> with <code>List&lt;SalesEvent&gt; events</code>. Records give you <code>equals</code>, so <code>assertEquals(List.of(new MonthLoaded(...)), events)</code> works.</li>
+                <li>The fixture's 52.00 is 13.00 (rice) + 18.00 (power bank, 18.90 − 0.90) + 21.00 (sunscreen, 22.50 − 1.50); the water row with quantity −3 is rejected.</li>
+                <li>If your chain revenue is not 26721.90, compare row counts first (3,600), then category by category.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+          <div class="check-list" data-task="t1">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t1a"><label class="form-check-label" for="t1a"><code>CsvMonthReader</code> and <code>DefaultSalesAggregator</code> exist; the console view prints the figures above for <code>data/2026-09</code>.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t1b"><label class="form-check-label" for="t1b"><code>SalesModel</code> fires <code>MonthLoaded</code> and <code>BranchSelected</code>, and fires nothing for an unchanged branch or a failed load.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t1c"><label class="form-check-label" for="t1c">No class in <code>model</code>, <code>ingest</code>, <code>engine</code> or <code>ui</code> imports <code>javafx.*</code>.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t1d"><label class="form-check-label" for="t1d"><code>SalesModelTest</code> has 4 passing tests based on <code>TestData</code>; both partners have commits.</label></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TASK 2 ===================== -->
+      <section class="task card mb-4" id="task2">
+        <div class="card-header task-header">
+          <span class="task-number text-bg-primary">2</span>
+          <h2 class="h4 mb-0">View: transaction table and category chart</h2>
+          <span class="badge text-bg-success">Easy</span>
+          <span class="badge text-bg-light ms-auto">60 min</span>
+        </div>
+        <div class="card-body">
+          <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+          <p>Write the V of MVC in JavaFX: a <code>ReportView</code> that observes <code>SalesModel</code> and renders the visible transactions in a <code>TableView</code> and the revenue by category in a <code>BarChart</code>. The view contains no calculation: everything it shows comes from the model.</p>
+
+          <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+          <ol class="step-list">
+            <li>Create <code>ui.ErrorDisplay</code> (<code>showError(String)</code>, <code>clearError()</code>); the controller of Task 3 will talk to the view only through it.</li>
+            <li>Create <code>ui.fx.ReportView implements SalesModelListener, ErrorDisplay</code> with: a month <code>TextField</code> (default <code>2026-09</code>), a branch <code>ComboBox</code> (<code>ALL</code>, <code>PNH</code>, <code>REP</code>, <code>BTB</code>), a <code>TableView&lt;SaleTransaction&gt;</code> with columns Date, Receipt, Product, Category, Qty, Revenue, a <code>BarChart&lt;String, Number&gt;</code> titled "Revenue by category (USD)", a status <code>Label</code> and a red error <code>Label</code>. Layout: filters in an <code>HBox</code> on top, <code>SplitPane(table, chart)</code> in the centre, labels at the bottom of a <code>BorderPane</code>.</li>
+            <li>Implement <code>modelChanged</code>: set the combo box to <code>model.branch()</code>, replace the table items, rebuild one chart series from <code>summary().revenueByCategory()</code>, and set the status text with a <code>switch</code> over the event.</li>
+            <li>Create <code>ui.fx.ReportApp extends Application</code>. For now, <code>start</code> builds the model and the view, shows the stage and calls <code>model.load(Path.of("data"), YearMonth.of(2026, 9))</code> directly (Task 3 replaces this with the controller).</li>
+            <li>Run <code>mvn javafx:run</code>. Check the status line against the Task 1 console output, switch nothing yet, and save a screenshot as <code>lab02/screenshots/mvc-viewer.png</code>.</li>
+            <li>Optional: build the same layout in FXML (<code>src/main/resources/edu/itc/salesreport/ui/fx/report.fxml</code>) with an <code>fx:controller</code> class <code>ReportFxmlView</code>; see the hints for what that class may contain.</li>
+          </ol>
+
+          <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+<pre><code class="language-java">// src/main/java/edu/itc/salesreport/ui/fx/ReportView.java
+package edu.itc.salesreport.ui.fx;
+
+/** MVC view: observes SalesModel, forwards gestures to the controller. */
+public final class ReportView implements SalesModelListener, ErrorDisplay {
+    private final SalesModel model;
+    private final BorderPane root = new BorderPane();
+    private final TextField monthField = new TextField("2026-09");
+    private final ComboBox&lt;String&gt; branchBox = new ComboBox&lt;&gt;();
+    private final TableView&lt;SaleTransaction&gt; table = new TableView&lt;&gt;();
+    private final BarChart&lt;String, Number&gt; chart =
+            new BarChart&lt;&gt;(new CategoryAxis(), new NumberAxis());
+    private final Label status = new Label("No month loaded");
+    private final Label error = new Label();
+
+    public ReportView(SalesModel model) {
+        this.model = model;
+        branchBox.getItems().setAll("ALL", "PNH", "REP", "BTB");
+        branchBox.setValue("ALL");
+        table.getColumns().setAll(List.of(
+                column("Date", t -&gt; t.date().toString()),
+                column("Receipt", SaleTransaction::receiptNo)
+                // TODO Product, Category, Qty, Revenue
+        ));
+        chart.setTitle("Revenue by category (USD)");
+        chart.setLegendVisible(false);
+        chart.setAnimated(false);
+        error.setStyle("-fx-text-fill: firebrick;");
+        // TODO layout: HBox(filters) top, SplitPane(table, chart) centre,
+        //      VBox(status, error) bottom
+        model.addListener(this);
+    }
+
+    public Parent root() { return root; }
+
+    @Override
+    public void modelChanged(SalesEvent event) {
+        // TODO 1. branchBox.setValue(model.branch())
+        // TODO 2. table.getItems().setAll(model.visibleTransactions())
+        // TODO 3. one XYChart.Series from model.summary().revenueByCategory()
+        // TODO 4. status text: switch (event) { case MonthLoaded m -&gt; ...
+        //                                       case BranchSelected b -&gt; ... }
+    }
+
+    @Override public void showError(String message) { error.setText(message); }
+    @Override public void clearError() { error.setText(""); }
+
+    // records have no JavaFX properties: adapt each column with a lambda
+    private static TableColumn&lt;SaleTransaction, String&gt; column(String title,
+            Function&lt;SaleTransaction, String&gt; value) {
+        var col = new TableColumn&lt;SaleTransaction, String&gt;(title);
+        col.setCellValueFactory(
+                c -&gt; new ReadOnlyStringWrapper(value.apply(c.getValue())));
+        return col;
+    }
+}</code></pre>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+          <p class="small mb-2">The window after <code>mvn javafx:run</code> (layout sketch; your bar colours come from the JavaFX default theme):</p>
+          <svg class="fig" style="max-width:760px" viewBox="0 0 640 260" role="img" aria-label="Expected window: filter bar, transaction table on the left, bar chart with six categories on the right, status line at the bottom">
+            <rect x="4" y="4" width="632" height="252" rx="10" class="f-box2"/>
+            <text x="18" y="24" class="f-mut">Angkor Mart · Monthly sales (MVC)</text>
+            <rect x="14" y="32" width="612" height="30" rx="6" class="f-warn"/>
+            <text x="26" y="52" class="f-txt-s">Month [2026-09]     Branch [ALL ▾]</text>
+            <rect x="14" y="70" width="300" height="140" rx="6" class="f-pri"/>
+            <text x="24" y="88" class="f-txt-b">Date · Receipt · Product · … · Revenue</text>
+            <text x="24" y="108" class="f-txt-s">2026-09-01  BTB-000001  …</text>
+            <text x="24" y="124" class="f-txt-s">…  3,600 rows, scrollable</text>
+            <rect x="324" y="70" width="302" height="140" rx="6" class="f-pri"/>
+            <text x="475" y="88" text-anchor="middle" class="f-txt-b">Revenue by category (USD)</text>
+            <rect x="344" y="184" width="30" height="16" class="f-suc"/><rect x="390" y="100" width="30" height="100" class="f-suc"/><rect x="436" y="164" width="30" height="36" class="f-suc"/><rect x="482" y="170" width="30" height="30" class="f-suc"/><rect x="528" y="150" width="30" height="50" class="f-suc"/><rect x="574" y="186" width="30" height="14" class="f-suc"/>
+            <text x="359" y="206" text-anchor="middle" class="f-mut">Bev</text><text x="405" y="206" text-anchor="middle" class="f-mut">Elec</text><text x="451" y="206" text-anchor="middle" class="f-mut">Groc</text><text x="497" y="206" text-anchor="middle" class="f-mut">Hous</text><text x="543" y="206" text-anchor="middle" class="f-mut">P.Care</text><text x="589" y="206" text-anchor="middle" class="f-mut">Stat</text>
+            <text x="18" y="232" class="f-txt-s">2026-09: 3600 rows, 0 rejected · revenue USD 26721.90 · receipts 1493</text>
+            <text x="18" y="248" class="f-mut">(error label, empty)</text>
+          </svg>
+
+          <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint2" role="button"><i class="bi bi-lightbulb"></i> Show hints</a></p>
+          <div class="collapse" id="hint2">
+            <div class="card card-body bg-body-tertiary small">
+              <ul class="mb-0">
+                <li><code>PropertyValueFactory</code> looks for <code>getX()</code> or <code>xProperty()</code>; record accessors are called <code>x()</code>, so use the lambda <code>column(...)</code> helper instead.</li>
+                <li><code>chart.getData().setAll(List.of(series))</code> replaces the old series; adding a new series each time stacks bars. <code>BigDecimal</code> is a <code>Number</code>, so it can go straight into <code>XYChart.Data</code>.</li>
+                <li>"Unable to open DISPLAY" or "Graphics Device initialization failed" means there is no desktop session; the tests still run.</li>
+                <li>FXML: the class named in <code>fx:controller</code> holds <code>@FXML</code> fields and <code>onAction</code> methods. In MVC terms it is part of the view: let it implement <code>ErrorDisplay</code> and forward to <code>ReportController</code>, nothing more.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+          <div class="check-list" data-task="t2">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t2a"><label class="form-check-label" for="t2a"><code>mvn javafx:run</code> shows 3,600 rows, six bars and the status line above; the screenshot is in <code>lab02/screenshots/</code>.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t2b"><label class="form-check-label" for="t2b"><code>ReportView</code> refreshes only in <code>modelChanged</code>; it computes no totals and reads no files.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t2c"><label class="form-check-label" for="t2c">All JavaFX imports are in <code>ui.fx</code>; <code>ErrorDisplay</code> lives in the toolkit-free <code>ui</code> package.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t2d"><label class="form-check-label" for="t2d">The console view from Task 1 still works unchanged next to the JavaFX view.</label></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TASK 3 ===================== -->
+      <section class="task card mb-4" id="task3">
+        <div class="card-header task-header">
+          <span class="task-number text-bg-primary">3</span>
+          <h2 class="h4 mb-0">Controller: filters, validation, error display</h2>
+          <span class="badge text-bg-warning text-dark">Medium</span>
+          <span class="badge text-bg-light ms-auto">75 min</span>
+        </div>
+        <div class="card-body">
+          <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+          <p>Write the C of MVC: <code>ReportController</code> turns raw text from the month field and the branch combo box into validated command records, applies them to the model, and reports every problem through <code>ErrorDisplay</code>. The controller has no JavaFX import.</p>
+
+          <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+          <ol class="step-list">
+            <li>Create <code>ui.Validation&lt;T&gt;</code>, a sealed interface with records <code>Valid&lt;T&gt;(T value)</code> and <code>Invalid&lt;T&gt;(String message)</code>.</li>
+            <li>Create <code>ui.InputRules</code> with <code>month(String text, Clock clock)</code> and <code>branch(String text)</code>, returning exactly the messages in the expected-output table. Trim input; upper-case branch codes.</li>
+            <li>Create the sealed <code>ui.ReportCommand</code> with <code>LoadMonth(YearMonth)</code> and <code>SelectBranch(String)</code>.</li>
+            <li>Create <code>ui.ReportController(SalesModel model, Path dataDir, Clock clock, ErrorDisplay errors)</code> with <code>monthEntered(String)</code>, <code>branchChosen(String)</code> and a package-private <code>execute(ReportCommand)</code> that switches over the command, calls <code>errors.clearError()</code> on success and maps <code>NoSuchFileException</code> to <code>"No sales data found in &lt;path&gt;"</code>.</li>
+            <li>Add <code>ReportView.bind(ReportController)</code>: <code>monthField.setOnAction</code> and <code>branchBox.setOnAction</code> forward the raw text, nothing else. In <code>ReportApp.start</code>, create the controller with <code>Clock.systemDefaultZone()</code>, call <code>view.bind(controller)</code> and replace the direct <code>model.load</code> with <code>controller.monthEntered("2026-09")</code>.</li>
+            <li>Try every input in the table below in the running viewer. Then append the broken row <code>PNH,2026-09-15,PNH-999999,SKU-1001,Jasmine Rice 5kg,Grocery,-1,6.50,0.00,KHQR</code> to <code>data/2026-09/PNH-2026-09-15.csv</code>, press Enter in the month field, and check that the status line reports <code>1 rejected</code> while the revenue stays <code>26721.90</code>. Save <code>lab02/screenshots/validation.png</code> showing one error message.</li>
+          </ol>
+
+          <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+<pre><code class="language-java">// src/main/java/edu/itc/salesreport/ui/InputRules.java
+/** Pure input rules: no UI toolkit, no I/O, clock injected. */
+public final class InputRules {
+    private static final Set&lt;String&gt; BRANCHES =
+            Set.of(SalesModel.ALL, "PNH", "REP", "BTB");
+
+    private InputRules() {}
+
+    public static Validation&lt;YearMonth&gt; month(String text, Clock clock) {
+        if (text == null || text.isBlank()) {
+            return new Invalid&lt;&gt;("Enter a month as yyyy-MM, e.g. 2026-09");
+        }
+        // TODO YearMonth.parse(text.strip()); on DateTimeParseException:
+        //      "'&lt;text&gt;' is not a month in the form yyyy-MM"
+        // TODO after YearMonth.now(clock): "&lt;month&gt; is in the future"
+        return null;
+    }
+
+    public static Validation&lt;String&gt; branch(String text) {
+        // TODO strip + upper-case; unknown: "Unknown branch '&lt;CODE&gt;': use ALL, PNH, REP or BTB"
+        return null;
+    }
+}
+
+// src/main/java/edu/itc/salesreport/ui/ReportController.java
+/** MVC controller: raw input, then validation, command, model. */
+public final class ReportController {
+    // fields + constructor: model, dataDir, clock, errors
+
+    public void monthEntered(String text) {
+        switch (InputRules.month(text, clock)) {
+            case Valid(var month) -&gt; execute(new LoadMonth(month));
+            case Invalid(var message) -&gt; errors.showError(message);
+        }
+    }
+
+    public void branchChosen(String text) {
+        // TODO same shape with InputRules.branch and SelectBranch
+    }
+
+    void execute(ReportCommand command) {
+        try {
+            switch (command) {
+                case LoadMonth(var month) -&gt; model.load(dataDir, month);
+                case SelectBranch(var branch) -&gt; model.selectBranch(branch);
+            }
+            errors.clearError();
+        } catch (NoSuchFileException e) {
+            errors.showError("No sales data found in " + e.getMessage());
+        } catch (IOException e) {
+            errors.showError("Could not read the sales files: " + e);
+        }
+    }
+}</code></pre>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered small align-middle">
+              <thead class="table-active"><tr><th>Input (then Enter / pick)</th><th>Model change</th><th>Error label shows</th></tr></thead>
+              <tbody>
+                <tr><td>month <code>2026-08</code></td><td>MonthLoaded: 3720 rows</td><td>(empty)</td></tr>
+                <tr><td>month <code>(blank)</code></td><td>none</td><td><code>Enter a month as yyyy-MM, e.g. 2026-09</code></td></tr>
+                <tr><td>month <code>2026/09</code></td><td>none</td><td><code>'2026/09' is not a month in the form yyyy-MM</code></td></tr>
+                <tr><td>month <code>2026-13</code></td><td>none</td><td><code>'2026-13' is not a month in the form yyyy-MM</code></td></tr>
+                <tr><td>a future month, e.g. <code>2099-01</code></td><td>none</td><td><code>2099-01 is in the future</code></td></tr>
+                <tr><td>month <code>2026-07</code></td><td>none, old data kept</td><td><code>No sales data found in data\2026-07</code> (<code>data/2026-07</code> on Linux and macOS)</td></tr>
+                <tr><td>branch <code>PNH</code> with 2026-09</td><td>BranchSelected: revenue USD 8455.90, receipts 489</td><td>(empty)</td></tr>
+              </tbody>
+            </table>
+          </div>
+<pre><code class="language-plaintext">status after the broken row is appended and 2026-09 reloaded:
+2026-09: 3600 rows, 1 rejected · revenue USD 26721.90 · receipts 1493
+rejected row: PNH-2026-09-15.csv:42 quantity must be positive: -1</code></pre>
+
+          <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint3" role="button"><i class="bi bi-lightbulb"></i> Show hints</a></p>
+          <div class="collapse" id="hint3">
+            <div class="card card-body bg-body-tertiary small">
+              <ul class="mb-0">
+                <li>With <code>import edu.itc.salesreport.ui.Validation.Valid;</code> the pattern <code>case Valid(var month)</code> is enough: the compiler infers <code>Valid&lt;YearMonth&gt;</code> from the selector type.</li>
+                <li>A <code>switch</code> over a sealed interface needs no <code>default</code>; leave it out so that a new command type becomes a compile error everywhere it is not handled.</li>
+                <li>Setting the combo box in <code>modelChanged</code> fires its <code>onAction</code> again. That is harmless only because <code>selectBranch</code> ignores an unchanged branch: check it by putting a breakpoint in <code>fire</code>.</li>
+                <li>To see the rejected rows, show <code>model.rejectedRows().getFirst()</code> in a tooltip or a second label when the list is not empty; do not move the list into the view.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+          <div class="check-list" data-task="t3">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t3a"><label class="form-check-label" for="t3a">Every row of the table above behaves as stated; no input produces a stack trace or a silent failure.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t3b"><label class="form-check-label" for="t3b"><code>ReportController</code>, <code>InputRules</code>, <code>Validation</code> and <code>ReportCommand</code> import nothing from JavaFX; the <code>Clock</code> is injected.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t3c"><label class="form-check-label" for="t3c">The view's event handlers are one-liners that forward raw text to the controller.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t3d"><label class="form-check-label" for="t3d">With the broken row the viewer reports 1 rejected row and the chain revenue stays USD 26,721.90; <code>validation.png</code> is committed.</label></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TASK 4 ===================== -->
+      <section class="task card mb-4" id="task4">
+        <div class="card-header task-header">
+          <span class="task-number text-bg-primary">4</span>
+          <h2 class="h4 mb-0">Tests without the UI, and a fat controller</h2>
+          <span class="badge text-bg-warning text-dark">Medium</span>
+          <span class="badge text-bg-light ms-auto">75 min</span>
+        </div>
+        <div class="card-body">
+          <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+          <p>Make the MVC split pay off: test the parser, the input rules, the model and the controller on a machine without a display, make the "no toolkit in the core" rule executable, and refactor a legacy fat controller into the structure you built.</p>
+
+          <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+          <ol class="step-list">
+            <li><code>ingest.CsvTransactionParserTest</code>: the canonical example row gives revenue <code>13.00</code> and <code>KHQR</code>; a <code>@ParameterizedTest</code> with <code>@ValueSource</code> rejects at least 7 invalid rows (unknown branch, bad date, quantity 0, discount above the line amount, unknown category, unknown payment, missing fields).</li>
+            <li><code>ui.InputRulesTest</code> with <code>Clock.fixed(Instant.parse("2026-09-27T03:00:00Z"), ZoneId.of("Asia/Phnom_Penh"))</code>: a trimmed valid month, six invalid inputs (<code>""</code>, <code>"  "</code>, <code>2026/09</code>, <code>2026-9</code>, <code>Sept</code>, <code>2026-10</code>), the exact future-month message, branch normalisation.</li>
+            <li><code>ui.ReportControllerTest</code> with a recording <code>FakeErrors implements ErrorDisplay</code>: a valid month loads and clears the error; <code>09/2026</code> never reaches the model; <code>2026-07</code> becomes "No sales data found…"; <code>branchChosen("rep")</code> leaves 1 visible row.</li>
+            <li><code>UiIndependenceTest</code>: read every <code>.java</code> file directly in <code>model</code>, <code>ingest</code>, <code>engine</code>, <code>ui</code> (and later <code>ui/mvp</code>) and fail if a line starts with <code>import javafx.</code>, <code>import java.awt.</code> or <code>import javax.swing.</code>. Break the rule once on purpose to see it fail, then revert.</li>
+            <li>Copy the legacy class below into <code>ui/fx/legacy/FatReportController.java</code>. In <code>lab02/refactoring.md</code>, list each smell with its consequence (at least five), and compute what it shows for 2026-09 <code>ALL</code> with the broken row of Task 3 present (it silently subtracts 6.50). Then replace its body so that <code>onLoad()</code> only forwards <code>monthField.getText()</code> to <code>ReportController</code>, and record the before/after line counts.</li>
+            <li>Run <code>mvn test</code> with the display disconnected or over SSH if you can: it must pass. Commit as "Task 4: headless tests and refactoring".</li>
+          </ol>
+
+          <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+<pre><code class="language-java">// src/main/java/edu/itc/salesreport/ui/fx/legacy/FatReportController.java
+package edu.itc.salesreport.ui.fx.legacy;
+
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+
+/** Smell on purpose: I/O, parsing, filtering and totals in a handler. */
+public class FatReportController {
+    private final TextField monthField;
+    private final ComboBox&lt;String&gt; branchBox;
+    private final Label status;
+
+    public FatReportController(TextField monthField,
+            ComboBox&lt;String&gt; branchBox, Label status) {
+        this.monthField = monthField;
+        this.branchBox = branchBox;
+        this.status = status;
+    }
+
+    public void onLoad() {
+        try {
+            var dir = Path.of("data", monthField.getText());
+            BigDecimal revenue = BigDecimal.ZERO;
+            for (Path f : Files.list(dir).toList()) {
+                var lines = Files.readAllLines(f);
+                for (String line : lines.subList(1, lines.size())) {
+                    String[] c = line.split(",");
+                    if (!branchBox.getValue().equals("ALL")
+                            &amp;&amp; !c[0].equals(branchBox.getValue())) continue;
+                    revenue = revenue.add(new BigDecimal(c[7])
+                            .multiply(new BigDecimal(c[6]))
+                            .subtract(new BigDecimal(c[8])));
+                }
+            }
+            status.setText("Revenue: " + revenue);
+        } catch (Exception e) {
+            status.setText("Error");
+        }
+    }
+}
+
+// src/test/java/edu/itc/salesreport/ui/ReportControllerTest.java (skeleton)
+/** No JavaFX here: the view is replaced by a recording fake. */
+class ReportControllerTest {
+    static final class FakeErrors implements ErrorDisplay {
+        final List&lt;String&gt; shown = new ArrayList&lt;&gt;();
+        @Override public void showError(String message) { shown.add(message); }
+        @Override public void clearError() { shown.add("&lt;cleared&gt;"); }
+    }
+
+    @TempDir Path dataDir;
+    private final FakeErrors errors = new FakeErrors();
+    private final List&lt;SalesEvent&gt; events = new ArrayList&lt;&gt;();
+    private SalesModel model;
+    private ReportController controller;
+
+    @BeforeEach
+    void setUp() throws IOException {
+        TestData.writeSample(dataDir);
+        // TODO model + events::add listener + controller with a fixed clock
+    }
+
+    @Test
+    void invalidMonthNeverReachesModel() {
+        controller.monthEntered("09/2026");
+        assertTrue(events.isEmpty());
+        assertEquals(List.of("'09/2026' is not a month in the form yyyy-MM"),
+                errors.shown);
+    }
+    // TODO validMonthLoadsModelAndClearsError, missingFolderBecomesMessage,
+    //      branchFilterNarrowsRows
+}</code></pre>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+<pre><code class="language-plaintext">$ mvn test
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0 -- in edu.itc.salesreport.ingest.CsvTransactionParserTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0 -- in edu.itc.salesreport.ui.InputRulesTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in edu.itc.salesreport.ui.ReportControllerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in edu.itc.salesreport.ui.SalesModelTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in edu.itc.salesreport.UiIndependenceTest
+[INFO] Tests run: 26, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS          (about 0.3 s of test time, no window opened)</code></pre>
+          <div class="table-responsive mt-2">
+            <table class="table table-sm table-bordered small align-middle mb-0">
+              <thead class="table-active"><tr><th>lab02/refactoring.md (excerpt)</th><th>Fat controller</th><th>After refactoring</th></tr></thead>
+              <tbody>
+                <tr><td>2026-09 ALL, broken row present</td><td>Revenue: 26715.40 (wrong, no warning)</td><td>USD 26721.90 · 1 rejected</td></tr>
+                <tr><td>Month <code>2026/09</code></td><td>"Error"</td><td>"'2026/09' is not a month in the form yyyy-MM"</td></tr>
+                <tr><td>Lines in the handler</td><td>about 20</td><td>1</td></tr>
+                <tr><td>Tests possible without JavaFX</td><td>0</td><td>all rules</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint4" role="button"><i class="bi bi-lightbulb"></i> Show hints</a></p>
+          <div class="collapse" id="hint4">
+            <div class="card card-body bg-body-tertiary small">
+              <ul class="mb-0">
+                <li>Prefer a hand-written fake to a Mockito mock for <code>ErrorDisplay</code>: the list of shown messages is exactly what you want to assert, in order.</li>
+                <li>Surefire runs tests with the project folder as working directory, so <code>Path.of("src/main/java/edu/itc/salesreport")</code> works in <code>UiIndependenceTest</code>. Use <code>Files.list</code> (direct children), not <code>Files.walk</code>, so <code>ui/fx</code> is not scanned as part of <code>ui</code>.</li>
+                <li>Smells to look for: unclosed <code>Files.list</code>, no row validation, no rounding, <code>catch (Exception)</code> with a useless message, widgets read inside the loop, hard-coded <code>"data"</code>, <code>split(",")</code> dropping trailing empty fields.</li>
+                <li>A test that calls <code>Platform.startup</code> or uses TestFX is a UI test: keep it out of this task (see the rubric).</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+          <div class="check-list" data-task="t4">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t4a"><label class="form-check-label" for="t4a">Parser, input-rule, model and controller tests pass with <code>mvn test</code>; none starts JavaFX.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t4b"><label class="form-check-label" for="t4b">All time-dependent tests use a fixed <code>Clock</code> and pass on any date.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t4c"><label class="form-check-label" for="t4c"><code>UiIndependenceTest</code> passes and was seen failing once when a <code>javafx</code> import was added to <code>ui</code>.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t4d"><label class="form-check-label" for="t4d"><code>lab02/refactoring.md</code> lists at least five smells with consequences and the before/after figures; <code>FatReportController</code> now only delegates.</label></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TASK 5 ===================== -->
+      <section class="task card mb-4" id="task5">
+        <div class="card-header task-header">
+          <span class="task-number text-bg-primary">5</span>
+          <h2 class="h4 mb-0">MVP variant, comparison, record what changed</h2>
+          <span class="badge text-bg-danger">Hard</span>
+          <span class="badge text-bg-light ms-auto">90 min</span>
+        </div>
+        <div class="card-body">
+          <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+          <p>Build the same screen as Model View Presenter with a passive view, test all of its display text without JavaFX, compare MVC and MVP with evidence from your own code, decide which one the team keeps, and record what this lab changed.</p>
+
+          <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+          <ol class="step-list">
+            <li>In the toolkit-free package <code>ui.mvp</code>, create <code>record RowItem(String date, String receipt, String product, String category, String quantity, String revenue)</code>, the passive-view interface <code>ReportScreen</code> and <code>ReportPresenter implements SalesModelListener</code> (starter below). The presenter formats money with <code>String.format(Locale.US, "%,.2f", amount)</code>.</li>
+            <li>In <code>ui.fx</code>, create <code>FxReportScreen implements ReportScreen</code> (same widgets as <code>ReportView</code>, but only setters and an <code>attach(ReportPresenter)</code> that forwards gestures) and <code>ReportMvpApp</code>. Run it with <code>mvn javafx:run -Djavafx.mainClass=edu.itc.salesreport.ui.fx.ReportMvpApp</code>.</li>
+            <li>Write <code>ui.mvp.ReportPresenterTest</code> with a recording <code>FakeScreen</code>: after <code>monthEntered("2026-09")</code> and <code>branchChosen("PNH")</code> on <code>TestData</code>, the status is exactly <code>PNH · 1 receipts · revenue USD 31.00 · basket USD 31.00</code> and the second row is <code>RowItem("2026-09-01", "PNH-000001", "Power Bank 10000mAh", "Electronics", "1", "18.00")</code>; <code>money(1234.5)</code> is <code>1,234.50</code>. Add <code>ui/mvp</code> to <code>UiIndependenceTest</code>.</li>
+            <li>Measure both variants and fill <code>lab02/mvc-vs-mvp.md</code> (template below): lines of code per class (<code>wc -l</code> or <code>(Get-Content f).Count</code>), number of tests that need no toolkit, where formatting lives, and what you had to change to add a "Discount" column in each variant (do it in both).</li>
+            <li>Write <code>lab02/adr-002-presentation-pattern.md</code>: which variant the team keeps for Lab-03 and why, citing one quality-attribute scenario from Lab-01 (or the fallback).</li>
+            <li><strong>Record what changed:</strong> create <code>lab02/README.md</code> with a table of this lab's files (path, task, author), the Lab-01 inputs reused with their commit hash or tag (or "fallback used"), and a change-log row. Tag the commit <code>lab-02</code>.</li>
+          </ol>
+
+          <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+<pre><code class="language-java">// src/main/java/edu/itc/salesreport/ui/mvp/ReportScreen.java
+/** Passive view: no model access, no formatting, no decisions. */
+public interface ReportScreen {
+    void showRows(List&lt;RowItem&gt; rows);
+    void showCategoryRevenue(Map&lt;String, BigDecimal&gt; revenue);
+    void showStatus(String text);
+    void showError(String message);
+}
+
+// src/main/java/edu/itc/salesreport/ui/mvp/ReportPresenter.java
+/** MVP presenter: handles input and pushes formatted data. */
+public final class ReportPresenter implements SalesModelListener {
+    private final SalesModel model;
+    private final ReportScreen screen;
+    private final Path dataDir;
+    private final Clock clock;
+
+    public ReportPresenter(SalesModel model, ReportScreen screen,
+            Path dataDir, Clock clock) {
+        this.model = model;
+        this.screen = screen;
+        this.dataDir = dataDir;
+        this.clock = clock;
+        model.addListener(this);
+    }
+
+    public void monthEntered(String text) {
+        // TODO InputRules.month; Valid: model.load (IOException -&gt;
+        //      screen.showError("No sales data for " + month)); Invalid: showError
+    }
+
+    public void branchChosen(String text) {
+        // TODO InputRules.branch; Valid: model.selectBranch; Invalid: showError
+    }
+
+    @Override
+    public void modelChanged(SalesEvent event) {
+        var s = model.summary();
+        // TODO screen.showRows(...toRow...), showCategoryRevenue(...)
+        // TODO showStatus("%s · %d receipts · revenue USD %s · basket USD %s"
+        //                  .formatted(...)), then showError("")
+    }
+
+    static String money(BigDecimal amount) {
+        return String.format(Locale.US, "%,.2f", amount);
+    }
+}</code></pre>
+<pre class="mt-2"><code class="language-markdown"># lab02/mvc-vs-mvp.md
+| Criterion                                  | MVC (ReportView + ReportController) | MVP (FxReportScreen + ReportPresenter) |
+|--------------------------------------------|-------------------------------------|----------------------------------------|
+| Lines of code (view / controller-presenter)|                                     |                                        |
+| Tests that run without JavaFX              |                                     |                                        |
+| Where money and status text are formatted  |                                     |                                        |
+| Files changed to add a "Discount" column   |                                     |                                        |
+| Does the view hold a model reference?      |                                     |                                        |
+| Effort for a second screen (web, Swing)    |                                     |                                        |</code></pre>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+<pre class="mermaid">
+classDiagram
+  direction LR
+  class ReportScreen {
+    &lt;&lt;interface&gt;&gt;
+    +showRows(List~RowItem~)
+    +showCategoryRevenue(Map)
+    +showStatus(String)
+    +showError(String)
+  }
+  class ReportPresenter {
+    +monthEntered(String)
+    +branchChosen(String)
+    +modelChanged(SalesEvent)
+  }
+  class FxReportScreen {
+    +attach(ReportPresenter)
+  }
+  class FakeScreen {
+    +status String
+  }
+  FxReportScreen ..|> ReportScreen
+  FakeScreen ..|> ReportScreen
+  FxReportScreen --> ReportPresenter : gestures
+  ReportPresenter --> ReportScreen : formatted values
+  ReportPresenter --> SalesModel : commands
+  SalesModel --> ReportPresenter : notifies
+</pre>
+<pre><code class="language-plaintext">$ mvn test
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in edu.itc.salesreport.ui.mvp.ReportPresenterTest
+[INFO] Tests run: 28, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS</code></pre>
+
+          <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint5" role="button"><i class="bi bi-lightbulb"></i> Show hints</a></p>
+          <div class="collapse" id="hint5">
+            <div class="card card-body bg-body-tertiary small">
+              <ul class="mb-0">
+                <li>The status expects "1 receipts": keep the presenter's text exactly as specified; pluralisation is a nice presenter-level improvement once the test says so.</li>
+                <li><code>FxReportScreen</code> has a <code>TableView&lt;RowItem&gt;</code>: every cell is already a <code>String</code>, so the column helper becomes trivial. If you find an <code>if</code> in it, it probably belongs in the presenter.</li>
+                <li>Both apps can run from the same project: they share <code>SalesModel</code> and only differ in the <code>ui.fx</code> classes and the composition root.</li>
+                <li>For the ADR, name the trade-off explicitly: MVP costs one interface per screen and some boilerplate; it buys testable display logic. Lab-03 moves to MVVM, so say what you expect bindings to replace.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+          <div class="check-list" data-task="t5">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t5a"><label class="form-check-label" for="t5a"><code>ReportMvpApp</code> shows the same figures as <code>ReportApp</code>; <code>FxReportScreen</code> has no reference to <code>SalesModel</code>.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t5b"><label class="form-check-label" for="t5b"><code>ReportPresenterTest</code> checks the exact status text and a formatted row without JavaFX; <code>ui/mvp</code> is covered by <code>UiIndependenceTest</code>.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t5c"><label class="form-check-label" for="t5c"><code>mvc-vs-mvp.md</code> is filled with measured numbers and the "Discount" column exists in both variants; the ADR records the team's choice.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="t5d"><label class="form-check-label" for="t5d"><code>lab02/README.md</code> lists the files, the reused inputs (commit or fallback) and a change-log row; the commit is tagged <code>lab-02</code>.</label></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== CHALLENGE ===================== -->
+      <section class="task card mb-4 border-warning" id="challenge">
+        <div class="card-header task-header bg-warning-subtle">
+          <span class="task-number text-bg-warning"><i class="bi bi-star-fill"></i></span>
+          <h2 class="h4 mb-0">Challenge: a Spring MVC web view of the same model</h2>
+          <span class="badge text-bg-danger">Hard</span>
+          <span class="badge text-bg-light ms-auto">90–120 min · optional, extra credit</span>
+        </div>
+        <div class="card-body">
+          <h3 class="h6 text-uppercase text-secondary">Scenario</h3>
+          <p>Branch managers do not have the desktop viewer. Head office asks for a web page with the same monthly figures. Prove that your domain and model are UI-independent: add a Spring MVC controller and one Thymeleaf template in a separate project, and change <strong>nothing</strong> in <code>model</code>, <code>ingest</code>, <code>engine</code> or <code>ui</code>.</p>
+          <h3 class="h6 text-uppercase text-secondary">Requirements</h3>
+          <ol class="step-list">
+            <li>Run <code>mvn install</code> in <code>sales-report</code>. Create a sibling project <code>sales-web/</code> with parent <code>org.springframework.boot:spring-boot-starter-parent:4.1.1</code>, dependencies <code>edu.itc:sales-report:0.2.0-SNAPSHOT</code>, <code>spring-boot-starter-webmvc</code>, <code>spring-boot-starter-thymeleaf</code> and (test) <code>spring-boot-starter-webmvc-test</code>. <code>mvn dependency:tree -Dincludes=org.openjfx</code> must print no JavaFX artifact.</li>
+            <li><code>SalesWebApp</code> declares beans for <code>CsvMonthReader</code>, <code>SalesAggregator</code> and <code>Clock</code>. <code>ReportWebController</code> handles <code>GET /report?month=&amp;branch=</code>, validates both parameters with <code>InputRules</code>, creates one <code>SalesModel</code> per request, and puts <code>summary</code>, <code>rejected</code> or <code>error</code> into the Spring <code>Model</code>.</li>
+            <li><code>templates/report.html</code> shows a month field, a branch select, the error, the totals line, revenue by category and the top products.</li>
+            <li>A <code>@WebMvcTest</code> with <code>MockMvcTester</code> checks one valid request and one invalid month.</li>
+            <li>Run it against the Task 1 data and compare with the desktop: <code>PNH</code> in 2026-09 must show USD 8455.90 and 489 receipts. <code>git diff --stat lab-02 -- src/main/java</code> in <code>sales-report</code> shows no change after the tag.</li>
+          </ol>
+          <h3 class="h6 text-uppercase text-secondary">Skeleton</h3>
+<pre><code class="language-java">// sales-web/src/main/java/edu/itc/salesreport/web/ReportWebController.java
+@Controller
+public class ReportWebController {
+    private record Inputs(Validation&lt;YearMonth&gt; month, Validation&lt;String&gt; branch) {}
+
+    private final CsvMonthReader reader;
+    private final SalesAggregator aggregator;
+    private final Clock clock;
+    private final Path dataDir;
+
+    public ReportWebController(CsvMonthReader reader, SalesAggregator aggregator,
+            Clock clock, @Value("${salesreport.data-dir:data}") String dataDir) {
+        this.reader = reader;
+        this.aggregator = aggregator;
+        this.clock = clock;
+        // a String, not a Path: Spring would resolve a relative Path
+        // against the servlet context instead of the working directory
+        this.dataDir = Path.of(dataDir);
+    }
+
+    @GetMapping("/report")
+    public String report(@RequestParam(defaultValue = "2026-09") String month,
+            @RequestParam(defaultValue = "ALL") String branch, Model page) {
+        page.addAttribute("month", month);
+        page.addAttribute("branch", branch);
+        page.addAttribute("branches", List.of("ALL", "PNH", "REP", "BTB"));
+        var inputs = new Inputs(InputRules.month(month, clock),
+                InputRules.branch(branch));
+        switch (inputs) {
+            case Inputs(Valid&lt;YearMonth&gt;(var m), Valid&lt;String&gt;(var b)) -&gt;
+                    show(m, b, page);
+            // TODO the two Invalid cases -&gt; page.addAttribute("error", msg)
+        }
+        return "report";
+    }
+
+    private void show(YearMonth month, String branch, Model page) {
+        // TODO new SalesModel(reader, aggregator), load, selectBranch,
+        //      attributes "summary" and "rejected"; IOException -&gt; "error"
+    }
+}
+
+// sales-web/src/test/java/edu/itc/salesreport/web/ReportWebControllerTest.java
+@WebMvcTest(controllers = ReportWebController.class,
+        properties = "salesreport.data-dir=target/test-data")
+class ReportWebControllerTest {
+    @Autowired MockMvcTester mvc;
+    // @BeforeAll: write PNH and REP files into target/test-data/2026-09
+
+    @Test
+    void rendersSummaryOfOneBranch() {
+        assertThat(mvc.get().uri("/report?month=2026-09&amp;branch=PNH"))
+                .hasStatusOk()
+                .hasViewName("report")
+                .bodyText().contains("Revenue USD 13.00", "Jasmine Rice 5kg");
+    }
+}</code></pre>
+          <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+<pre><code class="language-plaintext">$ java -jar target/sales-web-0.2.0-SNAPSHOT.jar --salesreport.data-dir=../data
+$ curl -s "localhost:8080/report?month=2026-09&amp;branch=PNH"
+&lt;h1&gt;Angkor Mart · 2026-09 · PNH&lt;/h1&gt;
+...
+  &lt;p&gt;Revenue USD 8455.90 · receipts 489 · basket USD 17.29 · rejected rows 0&lt;/p&gt;
+  ...
+      &lt;td&gt;Electronics&lt;/td&gt;&lt;td&gt;3404.50&lt;/td&gt;
+  ...
+    &lt;li&gt;Power Bank 10000mAh: USD 2604.70&lt;/li&gt;
+    &lt;li&gt;Sunscreen SPF50: USD 1064.00&lt;/li&gt;
+$ curl -s "localhost:8080/report?month=2026-10" | grep error
+&lt;p class="error"&gt;2026-10 is in the future&lt;/p&gt;      (when run in September 2026)</code></pre>
+          <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hintC" role="button"><i class="bi bi-lightbulb"></i> Show hints</a></p>
+          <div class="collapse" id="hintC"><div class="card card-body bg-body-tertiary small"><ul class="mb-0">
+            <li>Spring Boot 4 split the web starters: <code>spring-boot-starter-webmvc</code> for the runtime and <code>spring-boot-starter-webmvc-test</code> for <code>@WebMvcTest</code>, whose package is <code>org.springframework.boot.webmvc.test.autoconfigure</code>.</li>
+            <li>Beans declared in the <code>@SpringBootApplication</code> class are loaded by <code>@WebMvcTest</code> too, so the controller's constructor dependencies are satisfied without mocks.</li>
+            <li>In Thymeleaf, call record accessors as methods: <code>${summary.revenue()}</code>, <code>${p.productName()}</code>.</li>
+            <li>A singleton controller must not share one <code>SalesModel</code> between requests: its selected branch is per-user state. One model per request (or per session) is correct.</li>
+          </ul></div></div>
+          <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+          <div class="check-list" data-task="tc">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="tca"><label class="form-check-label" for="tca"><code>sales-web</code> builds with <code>mvn verify</code>, has no JavaFX dependency, and its <code>@WebMvcTest</code> passes.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="tcb"><label class="form-check-label" for="tcb">The web page shows the same figures as the desktop viewer for at least two branch and month combinations.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="tcc"><label class="form-check-label" for="tcc">Invalid month and branch parameters render a message, never a 500 page.</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="tcd"><label class="form-check-label" for="tcd"><code>git diff --stat lab-02 -- src/main/java</code> in <code>sales-report</code> is empty: the domain and model were reused unchanged.</label></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== RUBRIC ===================== -->
+      <section class="task card mb-4" id="rubric">
+        <div class="card-header"><h2 class="h4 mb-0"><i class="bi bi-clipboard-check"></i> Grading rubric</h2></div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle">
+              <thead class="table-active"><tr><th>Component</th><th>Points</th><th>Full marks when…</th></tr></thead>
+              <tbody>
+                <tr><td>Task 1 · Observable model</td><td>15</td><td>Console figures match; events fire exactly as specified; four model tests pass.</td></tr>
+                <tr><td>Task 2 · Table and chart view</td><td>15</td><td>Window shows 3,600 rows, six bars and the correct status; the view contains no calculation.</td></tr>
+                <tr><td>Task 3 · Controller and validation</td><td>20</td><td>All seven inputs behave as in the table; commands and injected clock; the broken row is reported, not summed.</td></tr>
+                <tr><td>Task 4 · Tests and refactoring</td><td>20</td><td>Headless tests for parser, rules, model and controller; architecture test; refactoring note with figures.</td></tr>
+                <tr><td>Task 5 · MVP and comparison</td><td>20</td><td>Passive view with a tested presenter; measured comparison; ADR; README with inputs and change log.</td></tr>
+                <tr><td>Code quality and Git history</td><td>10</td><td>Canonical names, small classes, meaningful commits from both partners, <code>mvn -q verify</code> green from a clean checkout.</td></tr>
+                <tr class="table-warning"><td>★ Challenge (extra credit)</td><td>+20</td><td>Spring MVC page with the same figures, tested, and no change to the reused packages.</td></tr>
+                <tr class="fw-semibold"><td>Total</td><td>100 (+20)</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="alert alert-danger small mb-0"><strong>Automatic deductions:</strong>
+            <ul class="mb-0">
+              <li>−10 if any class in <code>model</code>, <code>ingest</code>, <code>engine</code>, <code>ui</code> or <code>ui.mvp</code> imports <code>javafx</code>, <code>java.awt</code> or <code>javax.swing</code> (the architecture test fails).</li>
+              <li>−10 if the totals shown by the viewer differ from the model's (2026-09, <code>ALL</code>: USD 26,721.90, 1,493 receipts; <code>PNH</code>: USD 8,455.90, 489 receipts).</li>
+              <li>−5 per business calculation (revenue, totals, filtering, rounding, file parsing) found in a view, an FXML controller class or <code>ReportController</code>.</li>
+              <li>−5 per input from the Task 3 table that throws an uncaught exception or fails silently instead of showing a message.</li>
+              <li>−5 if a model, controller or presenter test starts the JavaFX toolkit (<code>Platform.startup</code>, <code>Application.launch</code>, TestFX) or depends on today's date.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== SUBMISSION ===================== -->
+      <section class="task card mb-5" id="submission">
+        <div class="card-header"><h2 class="h4 mb-0"><i class="bi bi-cloud-upload"></i> Submission</h2></div>
+        <div class="card-body">
+          <ol class="step-list">
+            <li>Repository layout:
+<pre><code class="language-plaintext">sales-report-&lt;team&gt;/
+├── pom.xml
+├── .gitignore
+├── src/main/java/edu/itc/salesreport/{model,ingest,engine,ui,ui/console,ui/fx,ui/mvp}
+├── src/main/java/edu/itc/salesreport/ui/fx/legacy/FatReportController.java
+├── src/test/java/edu/itc/salesreport/...   # at least 28 tests
+├── lab02/
+│   ├── README.md
+│   ├── refactoring.md
+│   ├── mvc-vs-mvp.md
+│   ├── adr-002-presentation-pattern.md
+│   └── screenshots/{mvc-viewer.png,validation.png}
+└── sales-web/                               # challenge only</code></pre>
+            </li>
+            <li>Self-check from a clean checkout (no display needed): <code>mvn -q verify</code> must succeed; for the challenge also <code>mvn install</code> in the root, then <code>mvn -q verify</code> in <code>sales-web/</code>.</li>
+            <li>Branch <code>lab-02</code>, pull request titled <code>Lab-02 – &lt;team name&gt;</code>, tag <code>lab-02</code> on the merged commit. Each partner must have commits on at least two tasks.</li>
+          </ol>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <a class="btn btn-outline-primary" href="Chapter-02.html"><i class="bi bi-easel"></i> Back to Chapter 02 slides</a>
+            <a class="btn btn-outline-secondary" href="Chapter-02.html#26"><i class="bi bi-patch-question"></i> Retake the chapter quiz</a>
+            <a class="btn btn-outline-secondary" href="../01-IntroductionToSoftwareEngineeringConcepts/Lab-01.html"><i class="bi bi-arrow-left-short"></i> Lab-01</a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/kotlin.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/protobuf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/dockerfile.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/groovy.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/scala.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  const KEY = 'sec-lab02-checklist';   // unique per lab
+
+  /* Theme (shared key with the chapter decks) */
+  const root = document.documentElement;
+  try { const saved = localStorage.getItem('se-theme') || localStorage.getItem('ch01-theme'); if (saved) root.setAttribute('data-bs-theme', saved); } catch (e) {}
+  function renderMermaid() {
+    if (!document.querySelector('.mermaid')) return;
+    const dark = root.getAttribute('data-bs-theme') === 'dark';
+    const run = () => { mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'loose' }); mermaid.run({ querySelector: '.mermaid' }); };
+    if (window.mermaid) { run(); return; }
+    const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js'; s.onload = run; document.head.appendChild(s);
+  }
+  document.querySelectorAll('.mermaid').forEach(m => { m.dataset.src = m.textContent; });
+  renderMermaid();
+  document.getElementById('btnTheme').addEventListener('click', () => {
+    const t = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-bs-theme', t);
+    try { localStorage.setItem('se-theme', t); localStorage.setItem('ch01-theme', t); } catch (e) {}
+    document.querySelectorAll('.mermaid').forEach(m => { m.removeAttribute('data-processed'); m.textContent = m.dataset.src; });
+    renderMermaid();
+  });
+
+  /* Highlight + copy buttons */
+  hljs.highlightAll();
+  document.querySelectorAll('pre > code').forEach(code => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-sm btn-secondary copy-btn';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(code.innerText); btn.textContent = 'Copied!'; }
+      catch (e) { btn.textContent = 'Failed'; }
+      setTimeout(() => btn.textContent = 'Copy', 1200);
+    });
+    code.parentElement.appendChild(btn);
+  });
+
+  /* Checklist persistence + progress */
+  const boxes = Array.from(document.querySelectorAll('.check-list input[type=checkbox]'));
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  boxes.forEach(b => { b.checked = !!state[b.id]; });
+  const bar = document.getElementById('progressBar'), txt = document.getElementById('progressText');
+  function updateProgress() {
+    const done = boxes.filter(b => b.checked).length;
+    bar.style.width = (done / boxes.length * 100) + '%';
+    txt.textContent = done + ' / ' + boxes.length;
+  }
+  boxes.forEach(b => b.addEventListener('change', () => {
+    state[b.id] = b.checked;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    updateProgress();
+  }));
+  document.getElementById('resetProgress').addEventListener('click', () => {
+    if (!confirm('Clear all ticked checklist items?')) return;
+    boxes.forEach(b => b.checked = false);
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    updateProgress();
+  });
+  updateProgress();
+
+  /* Sidebar scroll-spy */
+  const links = Array.from(document.querySelectorAll('#sideNav .nav-link'));
+  const sections = links.map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + en.target.id));
+    });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  sections.forEach(s => observer.observe(s));
+})();
+</script>
+
+<script data-gic="hidden-labs">
+(function () {
+var cfg = {"base": "/courses/software-engineering-concepts/", "folders": ["01-IntroductionToSoftwareEngineeringConcepts","02-ModelViewController","03-ModelViewViewModel","04-MultithreadedDesignStructures","05-ThreadCommunicationAndSynchronization","06-Multitasking","07-InterprocessCommunication","08-CaseStudyMonthlySalesReport","09-MicroservicesDesignPattern","10-ScalingMicroservices","11-BuildEngineering","12-MultiLanguageIntegration","13-DomainSpecificLanguages"], "open": ["/courses/software-engineering-concepts/01-IntroductionToSoftwareEngineeringConcepts/Lab-01.html","/courses/software-engineering-concepts/02-ModelViewController/Lab-02.html"], "hidden": ["/courses/software-engineering-concepts/03-ModelViewViewModel/Lab-03.html","/courses/software-engineering-concepts/04-MultithreadedDesignStructures/Lab-04.html","/courses/software-engineering-concepts/05-ThreadCommunicationAndSynchronization/Lab-05.html","/courses/software-engineering-concepts/06-Multitasking/Lab-06.html","/courses/software-engineering-concepts/07-InterprocessCommunication/Lab-07.html","/courses/software-engineering-concepts/08-CaseStudyMonthlySalesReport/Lab-08.html","/courses/software-engineering-concepts/09-MicroservicesDesignPattern/Lab-09.html","/courses/software-engineering-concepts/10-ScalingMicroservices/Lab-10.html","/courses/software-engineering-concepts/11-BuildEngineering/Lab-11.html","/courses/software-engineering-concepts/12-MultiLanguageIntegration/Lab-12.html","/courses/software-engineering-concepts/13-DomainSpecificLanguages/Lab-13.html"]};
+var LAB = /^(lab|labs|practical|exercises?|tp)(?:[-_ .]?\d+)?(?:[-_ .].*)?$/i;
+var lower = function (s) { return String(s).toLowerCase(); };
+var base = lower(cfg.base), folders = {}, openFolders = {}, hidden = {};
+cfg.folders.forEach(function (f) { folders[lower(f)] = true; });
+cfg.open.forEach(function (p) { openFolders[lower(p).substring(base.length).split('/')[0]] = true; });
+cfg.hidden.forEach(function (p) { hidden[lower(p)] = true; });
+
+function hiddenLab(href) {
+  var u;
+  try { u = new URL(href, location.href); } catch (e) { return false; }
+  if (u.origin !== location.origin) { return false; }
+  var p = u.pathname;
+  try { p = decodeURIComponent(p); } catch (e) { /* keep it encoded */ }
+  p = lower(p);
+  if (hidden[p]) { return true; }
+  if (p.indexOf(base) !== 0) { return false; }
+  var parts = p.substring(base.length).split('/');
+  return parts.length > 1 && folders[parts[0]] === true && !openFolders[parts[0]] && LAB.test(parts[1]);
+}
+
+function gone(el) {
+  el.style.setProperty('display', 'none', 'important');
+  el.setAttribute('aria-hidden', 'true');
+  el.setAttribute('data-lab-hidden', '');
+}
+
+function onlyHidden(el) {
+  for (var n = el.firstChild; n; n = n.nextSibling) {
+    if (n.nodeType === 3 && n.textContent.trim() !== '') { return false; }
+    if (n.nodeType === 1 && !n.hasAttribute('data-lab-hidden')) { return false; }
+  }
+  return true;
+}
+
+function hide(a) {
+  var parent = a.parentElement;
+  if (parent && parent.tagName === 'TD') {
+    var span = document.createElement('span');
+    span.textContent = a.textContent;
+    span.setAttribute('data-lab-text', '');
+    parent.replaceChild(span, a);
+    return;
+  }
+  gone(a);
+  a.setAttribute('tabindex', '-1');
+  if (parent && parent !== document.body && onlyHidden(parent)
+      && (parent.tagName === 'LI' || /(^|\s)(btn-group|btn-toolbar|d-flex|d-grid|d-inline-flex)(\s|$)/.test(parent.className))) {
+    gone(parent);
+  }
+}
+
+function scan(node) {
+  if (!node || node.nodeType !== 1) { return; }
+  var links = node.tagName === 'A' ? [node] : node.querySelectorAll('a[href]');
+  for (var i = 0; i < links.length; i++) {
+    var a = links[i];
+    if (a.hasAttribute('href') && !a.hasAttribute('data-lab-hidden') && hiddenLab(a.getAttribute('href'))) {
+      hide(a);
+    }
+  }
+}
+
+scan(document.documentElement);
+new MutationObserver(function (mutations) {
+  mutations.forEach(function (m) {
+    if (m.type === 'attributes') { scan(m.target); } else { m.addedNodes.forEach(scan); }
+  });
+}).observe(document.documentElement, {childList: true, subtree: true, attributes: true, attributeFilter: ['href']});
+})();
+</script>
+
+<style data-gic="lab-bar">
+body{padding-bottom:5.5rem !important}
+@media (max-width:575.98px){body{padding-bottom:9rem !important}}
+.gic-lab-bar{position:fixed;left:0;right:0;bottom:0;z-index:1040;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;margin:0;padding:.6rem 1rem;background:#111827;color:#f9fafb;border-top:3px solid #0d6efd;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Khmer","Khmer OS",sans-serif;box-shadow:0 -2px 8px rgba(0,0,0,.3);text-align:left}
+.gic-lab-bar__info{flex:1 1 16rem;min-width:0}
+.gic-lab-bar__title{display:block;font-weight:600;overflow-wrap:anywhere}
+.gic-lab-bar__meta{display:block;color:#d1d5db;font-size:13px}
+.gic-lab-bar__status{display:inline-block;margin-right:.5rem;padding:.05rem .5rem;border-radius:999px;font-size:12px;font-weight:600}
+.gic-lab-bar__btn{display:inline-block;padding:.45rem .9rem;border-radius:.375rem;background:#0b5ed7;color:#fff !important;font-weight:600;text-decoration:none !important;white-space:nowrap}
+.gic-lab-bar__btn:hover{background:#0a58ca}
+.gic-lab-bar__btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media print{.gic-lab-bar{display:none}body{padding-bottom:0 !important}}
+</style>
+<aside class="gic-lab-bar" data-gic="lab-bar" data-role="student" lang="en" aria-label="Lab assignment"><div class="gic-lab-bar__info"><span class="gic-lab-bar__title">Lab 02 · Model View Controller (MVC) design pattern</span><span class="gic-lab-bar__meta"><span class="gic-lab-bar__status" data-status="NOT_SUBMITTED" style="background:#e5e7eb;color:#111827">Not submitted</span>Deadline: <time datetime="2026-10-29T23:59+07:00">Oct 29, 2026, 11:59 PM</time></span></div><a class="gic-lab-bar__btn" href="/me/courses/labs/17">Submit your work</a></aside>
+</body>
+</html>
