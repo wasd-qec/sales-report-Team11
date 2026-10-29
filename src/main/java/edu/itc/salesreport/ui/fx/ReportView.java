@@ -2,6 +2,7 @@ package edu.itc.salesreport.ui.fx;
 
 import edu.itc.salesreport.model.SaleTransaction;
 import edu.itc.salesreport.ui.ErrorDisplay;
+import edu.itc.salesreport.ui.ReportController;
 import edu.itc.salesreport.ui.SalesEvent;
 import edu.itc.salesreport.ui.SalesModel;
 import edu.itc.salesreport.ui.SalesModelListener;
@@ -69,6 +70,11 @@ public final class ReportView implements SalesModelListener, ErrorDisplay {
     /** Exposes the branch input for the controller binding introduced in Task 3. */
     public ComboBox<String> branchBox() {
         return branchBox;
+    }
+
+    public void bind(ReportController controller) {
+        monthField.setOnAction(event -> controller.monthEntered(monthField.getText()));
+        branchBox.setOnAction(event -> controller.branchChosen(branchBox.getValue()));
     }
 
     @Override
