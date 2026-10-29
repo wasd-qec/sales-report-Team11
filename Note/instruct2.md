@@ -26,7 +26,7 @@ JDK 25 · Maven 3.9 · JUnit 6.1
    git --version
    ```
 
-    **Desktop session required for the window, not for the tests.** `mvn javafx:run` opens a window, so run it on Windows, macOS or a Linux desktop (X11 or Wayland). Over SSH, in WSL without WSLg or in CI it fails with "Unable to open DISPLAY"; `mvn test` and `mvn verify` work everywhere because no test starts JavaFX.
+   **Desktop session required for the window, not for the tests.** `mvn javafx:run` opens a window, so run it on Windows, macOS or a Linux desktop (X11 or Wayland). Over SSH, in WSL without WSLg or in CI it fails with "Unable to open DISPLAY"; `mvn test` and `mvn verify` work everywhere because no test starts JavaFX.
 2. **Case-study brief.** Everything this lab needs to know about the system: Case-study brief: Angkor Mart monthly sales report
 
    Company
@@ -51,13 +51,13 @@ JDK 25 · Maven 3.9 · JUnit 6.1
    :   One team repository with the Maven project `sales-report` at its root (Labs 02 to 08 extend it) and one folder per lab for written deliverables (`lab02/`).
 3. **Inputs from earlier labs.** This is the first code lab. If a Lab-01 item is missing, use the fallback and carry on.
 
-   | Input | Where | What you need from it | Fallback if missing |
-   | --- | --- | --- | --- |
-   | Team repository and roles | Lab-01, `README.md` | A repository with every member as collaborator | Create `sales-report-<team>` now and invite everyone. |
-   | Quality-attribute scenarios | Lab-01 (`lab01/`) | A testability and a modifiability scenario to cite in Task 5 | Write two one-line scenarios in `lab02/README.md`, e.g. "a new chart type is added in under a day without touching parsing". |
-   | C4 container diagram | Lab-01 (`lab01/`) | The name of the desktop viewer container | Call it "Report viewer (JavaFX desktop)". |
-   | ADR template | Lab-01 (`lab01/`) | Format for the MVC-or-MVP decision in Task 5 | Title, Status, Context, Decision, Consequences. |
-   | Domain types, parser, sample data | none yet | Canonical records, `CsvTransactionParser`, `SalesDataGenerator` | Copy the starter kit in step 5 (tested code). |
+   | Input                             | Where                 | What you need from it                                               | Fallback if missing                                                                                                            |
+   | --------------------------------- | --------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+   | Team repository and roles         | Lab-01, `README.md` | A repository with every member as collaborator                      | Create `sales-report-<team>` now and invite everyone.                                                                        |
+   | Quality-attribute scenarios       | Lab-01 (`lab01/`)   | A testability and a modifiability scenario to cite in Task 5        | Write two one-line scenarios in `lab02/README.md`, e.g. "a new chart type is added in under a day without touching parsing". |
+   | C4 container diagram              | Lab-01 (`lab01/`)   | The name of the desktop viewer container                            | Call it "Report viewer (JavaFX desktop)".                                                                                      |
+   | ADR template                      | Lab-01 (`lab01/`)   | Format for the MVC-or-MVP decision in Task 5                        | Title, Status, Context, Decision, Consequences.                                                                                |
+   | Domain types, parser, sample data | none yet              | Canonical records, `CsvTransactionParser`, `SalesDataGenerator` | Copy the starter kit in step 5 (tested code).                                                                                  |
 4. **Project.** Create `pom.xml` at the repository root. JavaFX is `optional` so that projects reusing the domain (the challenge) do not inherit it; `javafx.mainClass` is a property so you can start another class from the command line.
 
    ```
@@ -796,15 +796,15 @@ public final class ReportController {
 
 ### Expected output
 
-| Input (then Enter / pick) | Model change | Error label shows |
-| --- | --- | --- |
-| month `2026-08` | MonthLoaded: 3720 rows | (empty) |
-| month `(blank)` | none | `Enter a month as yyyy-MM, e.g. 2026-09` |
-| month `2026/09` | none | `'2026/09' is not a month in the form yyyy-MM` |
-| month `2026-13` | none | `'2026-13' is not a month in the form yyyy-MM` |
-| a future month, e.g. `2099-01` | none | `2099-01 is in the future` |
-| month `2026-07` | none, old data kept | `No sales data found in data\2026-07` (`data/2026-07` on Linux and macOS) |
-| branch `PNH` with 2026-09 | BranchSelected: revenue USD 8455.90, receipts 489 | (empty) |
+| Input (then Enter / pick)        | Model change                                      | Error label shows                                                             |
+| -------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------- |
+| month `2026-08`                | MonthLoaded: 3720 rows                            | (empty)                                                                       |
+| month `(blank)`                | none                                              | `Enter a month as yyyy-MM, e.g. 2026-09`                                    |
+| month `2026/09`                | none                                              | `'2026/09' is not a month in the form yyyy-MM`                              |
+| month `2026-13`                | none                                              | `'2026-13' is not a month in the form yyyy-MM`                              |
+| a future month, e.g. `2099-01` | none                                              | `2099-01 is in the future`                                                  |
+| month `2026-07`                | none, old data kept                               | `No sales data found in data\2026-07` (`data/2026-07` on Linux and macOS) |
+| branch `PNH` with 2026-09      | BranchSelected: revenue USD 8455.90, receipts 489 | (empty)                                                                       |
 
 ```
 status after the broken row is appended and 2026-09 reloaded:
@@ -937,12 +937,12 @@ $ mvn test
 [INFO] BUILD SUCCESS          (about 0.3 s of test time, no window opened)
 ```
 
-| lab02/refactoring.md (excerpt) | Fat controller | After refactoring |
-| --- | --- | --- |
-| 2026-09 ALL, broken row present | Revenue: 26715.40 (wrong, no warning) | USD 26721.90 · 1 rejected |
-| Month `2026/09` | "Error" | "'2026/09' is not a month in the form yyyy-MM" |
-| Lines in the handler | about 20 | 1 |
-| Tests possible without JavaFX | 0 | all rules |
+| lab02/refactoring.md (excerpt)  | Fat controller                        | After refactoring                              |
+| ------------------------------- | ------------------------------------- | ---------------------------------------------- |
+| 2026-09 ALL, broken row present | Revenue: 26715.40 (wrong, no warning) | USD 26721.90 · 1 rejected                     |
+| Month `2026/09`               | "Error"                               | "'2026/09' is not a month in the form yyyy-MM" |
+| Lines in the handler            | about 20                              | 1                                              |
+| Tests possible without JavaFX   | 0                                     | all rules                                      |
 
 [Show hints](#hint4)
 
@@ -1197,16 +1197,16 @@ $ curl -s "localhost:8080/report?month=2026-10" | grep error
 
 ## Grading rubric
 
-| Component | Points | Full marks when… |
-| --- | --- | --- |
-| Task 1 · Observable model | 15 | Console figures match; events fire exactly as specified; four model tests pass. |
-| Task 2 · Table and chart view | 15 | Window shows 3,600 rows, six bars and the correct status; the view contains no calculation. |
-| Task 3 · Controller and validation | 20 | All seven inputs behave as in the table; commands and injected clock; the broken row is reported, not summed. |
-| Task 4 · Tests and refactoring | 20 | Headless tests for parser, rules, model and controller; architecture test; refactoring note with figures. |
-| Task 5 · MVP and comparison | 20 | Passive view with a tested presenter; measured comparison; ADR; README with inputs and change log. |
-| Code quality and Git history | 10 | Canonical names, small classes, meaningful commits from both partners, `mvn -q verify` green from a clean checkout. |
-| ★ Challenge (extra credit) | +20 | Spring MVC page with the same figures, tested, and no change to the reused packages. |
-| Total | 100 (+20) |  |
+| Component                           | Points    | Full marks when…                                                                                                     |
+| ----------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------- |
+| Task 1 · Observable model          | 15        | Console figures match; events fire exactly as specified; four model tests pass.                                       |
+| Task 2 · Table and chart view      | 15        | Window shows 3,600 rows, six bars and the correct status; the view contains no calculation.                           |
+| Task 3 · Controller and validation | 20        | All seven inputs behave as in the table; commands and injected clock; the broken row is reported, not summed.         |
+| Task 4 · Tests and refactoring     | 20        | Headless tests for parser, rules, model and controller; architecture test; refactoring note with figures.             |
+| Task 5 · MVP and comparison        | 20        | Passive view with a tested presenter; measured comparison; ADR; README with inputs and change log.                    |
+| Code quality and Git history        | 10        | Canonical names, small classes, meaningful commits from both partners, `mvn -q verify` green from a clean checkout. |
+| ★ Challenge (extra credit)         | +20       | Spring MVC page with the same figures, tested, and no change to the reused packages.                                  |
+| Total                               | 100 (+20) |                                                                                                                       |
 
 **Automatic deductions:**
 
