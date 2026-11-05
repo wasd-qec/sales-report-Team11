@@ -1,0 +1,2959 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lab-03 · Model View ViewModel (MVVM) design pattern</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+    <style>
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 4.5rem;
+        }
+
+        body {
+            padding-top: 4rem;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 4.5rem;
+            max-height: calc(100vh - 5rem);
+            overflow-y: auto;
+        }
+
+        .sidebar .nav-link {
+            padding: .35rem .75rem;
+            border-left: 3px solid transparent;
+            font-size: .9rem;
+        }
+
+        .sidebar .nav-link.active {
+            border-left-color: var(--bs-primary);
+            font-weight: 600;
+        }
+
+        .task {
+            scroll-margin-top: 4.5rem;
+        }
+
+        .task-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .5rem .75rem;
+        }
+
+        .task-number {
+            width: 2.6rem;
+            height: 2.6rem;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        pre {
+            position: relative;
+            margin: 0;
+            border-radius: .5rem;
+            overflow: hidden;
+        }
+
+        pre code.hljs {
+            padding: 1rem 1.1rem;
+            font-size: .84rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: .4rem;
+            right: .4rem;
+            opacity: 0;
+            transition: opacity .2s;
+            font-size: .7rem;
+            padding: .15rem .45rem;
+        }
+
+        pre:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .hint-btn {
+            text-decoration: none;
+        }
+
+        .check-list .form-check {
+            padding: .35rem 0 .35rem 1.8rem;
+            border-bottom: 1px dashed var(--bs-border-color);
+        }
+
+        .check-list .form-check:last-child {
+            border-bottom: 0;
+        }
+
+        .check-list input:checked+label {
+            text-decoration: line-through;
+            opacity: .6;
+        }
+
+        .progress {
+            height: .5rem;
+        }
+
+        .step-list li {
+            margin-bottom: .4rem;
+        }
+
+        pre.mermaid {
+            background: transparent;
+            text-align: center;
+            overflow: visible;
+        }
+
+        pre.mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        svg.fig {
+            width: 100%;
+            height: auto;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .f-box2 {
+            fill: var(--bs-secondary-bg);
+            stroke: var(--bs-border-color);
+            stroke-width: 1.5;
+        }
+
+        .f-pri {
+            fill: rgba(13, 110, 253, .18);
+            stroke: var(--bs-primary);
+            stroke-width: 1.5;
+        }
+
+        .f-suc {
+            fill: rgba(25, 135, 84, .18);
+            stroke: var(--bs-success);
+            stroke-width: 1.5;
+        }
+
+        .f-warn {
+            fill: rgba(255, 193, 7, .18);
+            stroke: var(--bs-warning);
+            stroke-width: 1.5;
+        }
+
+        .f-dan {
+            fill: rgba(220, 53, 69, .18);
+            stroke: var(--bs-danger);
+            stroke-width: 1.5;
+        }
+
+        .f-txt-s {
+            fill: var(--bs-body-color);
+            font-size: 11px;
+        }
+
+        .f-txt-b {
+            fill: var(--bs-body-color);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .f-mut {
+            fill: var(--bs-secondary-color);
+            font-size: 11px;
+        }
+
+        .f-line {
+            stroke: var(--bs-body-color);
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .f-line-s {
+            stroke: var(--bs-success);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .f-line-d {
+            stroke: var(--bs-danger);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .f-dash {
+            stroke-dasharray: 5 4;
+        }
+
+        @media print {
+
+            .sidebar,
+            .navbar,
+            .copy-btn,
+            .btn-theme {
+                display: none !important;
+            }
+
+            body {
+                padding-top: 0;
+            }
+
+            .collapse {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8"
+                orient="auto-start-reverse">
+                <path d="M0 0L10 5 0 10z" style="fill:var(--bs-body-color)" />
+            </marker>
+            <marker id="arr-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8"
+                orient="auto-start-reverse">
+                <path d="M0 0L10 5 0 10z" style="fill:var(--bs-success)" />
+            </marker>
+            <marker id="arr-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8"
+                orient="auto-start-reverse">
+                <path d="M0 0L10 5 0 10z" style="fill:var(--bs-danger)" />
+            </marker>
+        </defs>
+    </svg>
+
+    <nav class="navbar navbar-expand-lg fixed-top border-bottom bg-body-tertiary">
+        <div class="container-xl">
+            <a class="navbar-brand fw-semibold" href="#top"><i class="bi bi-flask text-success"></i> Lab-03 · Model View
+                ViewModel (MVVM) design pattern</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav"
+                aria-controls="topNav" aria-expanded="false" aria-label="Toggle navigation"><span
+                    class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="topNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                    <li class="nav-item"><a class="nav-link" href="Chapter-03.html"><i class="bi bi-easel"></i> Chapter
+                            slides</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#setup">Setup</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rubric">Rubric</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#submission">Submission</a></li>
+                    <li class="nav-item"><button class="btn btn-sm btn-outline-secondary btn-theme" id="btnTheme"
+                            title="Toggle light/dark"><i class="bi bi-circle-half"></i></button></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-xl" id="top">
+        <div class="row g-4">
+
+            <!-- ===================== SIDEBAR (update the task names) ===================== -->
+            <aside class="col-lg-3 d-none d-lg-block">
+                <div class="sidebar">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold">Your
+                                progress</span><span id="progressText">0 / 0</span></div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" id="progressBar" style="width:0%"></div>
+                        </div>
+                        <button class="btn btn-link btn-sm p-0 mt-1 text-secondary" id="resetProgress">Reset
+                            checklist</button>
+                    </div>
+                    <nav class="nav flex-column" id="sideNav">
+                        <a class="nav-link" href="#setup">0 · Setup</a>
+                        <a class="nav-link" href="#task1">1 · Design the ViewModel</a>
+                        <a class="nav-link" href="#task2">2 · Bind the view</a>
+                        <a class="nav-link" href="#task3">3 · Validation and errors</a>
+                        <a class="nav-link" href="#task4">4 · Background loading</a>
+                        <a class="nav-link" href="#task5">5 · Tests and MVC vs MVVM</a>
+                        <a class="nav-link" href="#challenge">★ Challenge · Second view</a>
+                        <a class="nav-link" href="#rubric">Grading rubric</a>
+                        <a class="nav-link" href="#submission">Submission</a>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- ===================== MAIN ===================== -->
+            <main class="col-lg-9">
+
+                <header class="mb-4">
+                    <p class="text-uppercase small text-secondary mb-1" style="letter-spacing:.12em">Software
+                        Engineering Concepts · Chapter 03</p>
+                    <h1 class="fw-bold">Lab-03: Model View ViewModel (MVVM) design pattern</h1>
+                    <p class="lead">You refactor the Lab-02 Angkor Mart report viewer from MVC to MVVM. You design a
+                        <code>ReportViewModel</code> with properties, commands and validation, bind a JavaFX view to it
+                        and delete the controller logic, load months in a background <code>Task</code> with progress and
+                        cancellation (and measure that the UI no longer freezes), and prove the design with at least
+                        eight ViewModel unit tests that never start JavaFX. The challenge adds a second view, a compact
+                        dashboard, bound to the same ViewModel.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge text-bg-primary">JavaFX 25.0.4</span>
+                        <span class="badge text-bg-secondary">JDK 25 · Maven 3.9</span>
+                        <span class="badge text-bg-secondary">JUnit 6.1.3 · JaCoCo 0.8.15</span>
+                        <span class="badge text-bg-secondary">≈ 6 hours · pairs</span>
+                        <span class="badge text-bg-success">5 tasks + 1 challenge</span>
+                    </div>
+                </header>
+
+                <div class="alert alert-info d-flex gap-2">
+                    <i class="bi bi-info-circle-fill fs-5"></i>
+                    <div><strong>How to work through this lab.</strong> Do the tasks in order; each builds on the
+                        previous. Read the <em>Goal</em>, follow the <em>Steps</em>, compare with the <em>Expected
+                            output</em>, and tick the <em>Acceptance checklist</em> (saved in your browser). Open a hint
+                        only when stuck for more than 10 minutes. Work in pairs and split the work so that <strong>each
+                            member authors commits</strong> (for example one writes the ViewModel and its tests, the
+                        other the view and the background loading); the Git history is part of the grade.</div>
+                </div>
+
+                <!-- ===================== SETUP ===================== -->
+                <section class="task card mb-4" id="setup">
+                    <div class="card-header task-header">
+                        <span class="task-number text-bg-secondary">0</span>
+                        <h2 class="h4 mb-0">Setup</h2>
+                        <span class="badge text-bg-light ms-auto">30 min</span>
+                    </div>
+                    <div class="card-body">
+                        <ol class="step-list">
+                            <li>Verify the tools and create the lab branch from your Lab-02 state:
+                                <pre><code class="language-bash">java -version          # openjdk 25.x
+mvn -v                 # Apache Maven 3.9.16
+git switch main &amp;&amp; git pull
+git tag lab-02-final   # skip if your Lab-02 is already tagged
+git switch -c lab-03
+mkdir -p lab03/screenshots</code></pre>
+                            </li>
+                            <li>Read the case-study brief. It contains every fact this lab needs.
+                                <div class="card mt-2 mb-1" id="case-brief">
+                                    <div class="card-header fw-semibold"><i class="bi bi-journal-text"></i> Case-study
+                                        brief: Angkor Mart monthly sales report viewer</div>
+                                    <div class="card-body small">
+                                        <dl class="row mb-0">
+                                            <dt class="col-sm-3 col-lg-2">Company</dt>
+                                            <dd class="col-sm-9 col-lg-10">Angkor Mart, a retail chain with three
+                                                branches: <code>PNH</code> (Phnom Penh), <code>REP</code> (Siem Reap),
+                                                <code>BTB</code> (Battambang). Head office needs a monthly sales report
+                                                per branch and for the chain. Currency USD.</dd>
+                                            <dt class="col-sm-3 col-lg-2">Data</dt>
+                                            <dd class="col-sm-9 col-lg-10">One CSV per branch and day:
+                                                <code>data/&lt;yyyy-MM&gt;/&lt;BRANCH&gt;-&lt;yyyy-MM-dd&gt;.csv</code>,
+                                                UTF-8, comma separated, header
+                                                <code>branch,date,receipt_no,sku,product_name,category,quantity,unit_price,discount,payment_method</code>.
+                                                Example row:
+                                                <code>PNH,2026-09-01,PNH-000123,SKU-1001,Jasmine Rice 5kg,Grocery,2,6.50,0.00,KHQR</code>.
+                                                Categories <code>Grocery</code>, <code>Beverages</code>,
+                                                <code>Household</code>, <code>Personal Care</code>,
+                                                <code>Electronics</code>, <code>Stationery</code>; payment methods
+                                                <code>CASH</code>, <code>CARD</code>, <code>KHQR</code>.</dd>
+                                            <dt class="col-sm-3 col-lg-2">Rules (model)</dt>
+                                            <dd class="col-sm-9 col-lg-10">Line revenue =
+                                                <code>quantity × unit_price − discount</code> with
+                                                <code>BigDecimal</code>, scale 2, <code>RoundingMode.HALF_UP</code>. A
+                                                branch summary has revenue, discounts, number of receipts, average
+                                                basket (revenue / receipts), revenue by category, top 10 products and
+                                                revenue by payment method.</dd>
+                                            <dt class="col-sm-3 col-lg-2">Java names</dt>
+                                            <dd class="col-sm-9 col-lg-10">Maven <code>edu.itc:sales-report</code>, Java
+                                                25. Packages <code>edu.itc.salesreport.model</code>,
+                                                <code>.ingest</code>, <code>.engine</code>, <code>.ui</code>. Records
+                                                <code>SaleTransaction</code> (with <code>revenue()</code>),
+                                                <code>ProductTotal</code>, <code>BranchSummary</code>,
+                                                <code>MonthlyReport</code>; <code>enum PaymentMethod</code>; interfaces
+                                                <code>TransactionParser</code>, <code>ReportEngine</code>.</dd>
+                                            <dt class="col-sm-3 col-lg-2">The screen</dt>
+                                            <dd class="col-sm-9 col-lg-10">Month selector (last 12 months, also typed as
+                                                <code>2026-08</code>), one tick box per branch (all ticked at start),
+                                                <em>Generate</em> and <em>Cancel</em> buttons, a progress bar, a status
+                                                line, a validation line, a load-error line, a table (Branch, Revenue,
+                                                Discounts, Receipts, Avg basket), a product filter with the top-products
+                                                list of the loaded branches, and the chain revenue as
+                                                <code>USD 12,345.60</code>.</dd>
+                                            <dt class="col-sm-3 col-lg-2">Screen rules</dt>
+                                            <dd class="col-sm-9 col-lg-10">A month is required and must not be after the
+                                                current month ("Month 2026-10 is in the future."). At least one branch
+                                                must be ticked ("Select at least one branch."). <em>Generate</em> is
+                                                disabled while the input is invalid or a load runs; <em>Cancel</em> is
+                                                enabled only while a load runs. Cancel and load errors keep the
+                                                previously loaded data. The product filter is case-insensitive on name
+                                                and SKU.</dd>
+                                            <dt class="col-sm-3 col-lg-2">Test facts</dt>
+                                            <dd class="col-sm-9 col-lg-10">"Today" in tests is <strong>2026-09-27, zone
+                                                    Asia/Phnom_Penh</strong>. Measurement data: August 2026, 5,000 rows
+                                                per branch and day, seed 42 (465,000 rows).</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </li>
+                            <li><strong>Inputs from earlier labs.</strong> If one of them is incomplete, use the
+                                fallback and carry on; do not stop to repair Lab-02.
+                                <div class="table-responsive mt-2">
+                                    <table class="table table-sm table-bordered small align-middle">
+                                        <thead class="table-active">
+                                            <tr>
+                                                <th>Input</th>
+                                                <th>Where</th>
+                                                <th>What you need from it</th>
+                                                <th>Fallback if missing</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Maven project <code>sales-report</code></td>
+                                                <td>team repository, tag <code>lab-02-final</code></td>
+                                                <td>Builds with <code>mvn -q verify</code> on JDK 25</td>
+                                                <td>Use the <code>pom.xml</code> of step 4.</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Model classes</td>
+                                                <td>Lab-02, <code>edu.itc.salesreport.model</code> and your CSV loader
+                                                </td>
+                                                <td>The records and a way to load one branch for one month</td>
+                                                <td>Fallback starter A: model records,
+                                                    <code>CsvTransactionParser</code>, <code>SimpleReportEngine</code>.
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Lab-02 MVC viewer</td>
+                                                <td>Lab-02, <code>edu.itc.salesreport.ui</code></td>
+                                                <td>The controller whose logic you move into the ViewModel, and the
+                                                    baseline for Task 5</td>
+                                                <td>Fallback starter B: <code>MvcReportViewerApp</code> with its
+                                                    <code>ReportController</code>.</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Sample data</td>
+                                                <td>Lab-02, <code>data/</code></td>
+                                                <td>One complete month for all three branches</td>
+                                                <td>Generate it with <code>SalesDataGenerator</code> (starter A),
+                                                    command in Task 4.</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Lab-02 notes</td>
+                                                <td><code>lab02/README.md</code></td>
+                                                <td>Commit or tag of the viewer you refactor</td>
+                                                <td>Write "fallback starter B" in <code>lab03/README.md</code> instead.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </li>
+                            <li>Update <code>pom.xml</code> (versions resolved from Maven Central and built with JDK
+                                25.0.3 and Maven 3.9.16). <code>app.main</code> lets you run other main classes with
+                                <code>mvn javafx:run -Dapp.main=…</code>.
+                                <pre><code class="language-xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+  &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+  &lt;groupId&gt;edu.itc&lt;/groupId&gt;
+  &lt;artifactId&gt;sales-report&lt;/artifactId&gt;
+  &lt;version&gt;0.3.0-SNAPSHOT&lt;/version&gt;
+
+  &lt;properties&gt;
+    &lt;maven.compiler.release&gt;25&lt;/maven.compiler.release&gt;
+    &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+    &lt;javafx.version&gt;25.0.4&lt;/javafx.version&gt;
+    &lt;app.main&gt;edu.itc.salesreport.ui.ReportViewerApp&lt;/app.main&gt;
+  &lt;/properties&gt;
+
+  &lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+      &lt;dependency&gt;
+        &lt;groupId&gt;org.junit&lt;/groupId&gt;
+        &lt;artifactId&gt;junit-bom&lt;/artifactId&gt;
+        &lt;version&gt;6.1.3&lt;/version&gt;
+        &lt;type&gt;pom&lt;/type&gt;
+        &lt;scope&gt;import&lt;/scope&gt;
+      &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+  &lt;/dependencyManagement&gt;
+
+  &lt;dependencies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.openjfx&lt;/groupId&gt;
+      &lt;artifactId&gt;javafx-controls&lt;/artifactId&gt;
+      &lt;version&gt;${javafx.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.junit.jupiter&lt;/groupId&gt;
+      &lt;artifactId&gt;junit-jupiter&lt;/artifactId&gt;
+      &lt;scope&gt;test&lt;/scope&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+
+  &lt;build&gt;
+    &lt;plugins&gt;
+      &lt;plugin&gt;
+        &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+        &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;
+        &lt;version&gt;3.15.0&lt;/version&gt;
+      &lt;/plugin&gt;
+      &lt;plugin&gt;
+        &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+        &lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;
+        &lt;version&gt;3.5.6&lt;/version&gt;
+      &lt;/plugin&gt;
+      &lt;plugin&gt;
+        &lt;groupId&gt;org.jacoco&lt;/groupId&gt;
+        &lt;artifactId&gt;jacoco-maven-plugin&lt;/artifactId&gt;
+        &lt;version&gt;0.8.15&lt;/version&gt;
+        &lt;executions&gt;
+          &lt;execution&gt;&lt;goals&gt;&lt;goal&gt;prepare-agent&lt;/goal&gt;&lt;/goals&gt;&lt;/execution&gt;
+          &lt;execution&gt;
+            &lt;id&gt;report&lt;/id&gt;
+            &lt;phase&gt;verify&lt;/phase&gt;
+            &lt;goals&gt;&lt;goal&gt;report&lt;/goal&gt;&lt;/goals&gt;
+          &lt;/execution&gt;
+        &lt;/executions&gt;
+      &lt;/plugin&gt;
+      &lt;plugin&gt;
+        &lt;groupId&gt;org.openjfx&lt;/groupId&gt;
+        &lt;artifactId&gt;javafx-maven-plugin&lt;/artifactId&gt;
+        &lt;version&gt;0.0.8&lt;/version&gt;
+        &lt;configuration&gt;
+          &lt;mainClass&gt;${app.main}&lt;/mainClass&gt;
+        &lt;/configuration&gt;
+      &lt;/plugin&gt;
+    &lt;/plugins&gt;
+  &lt;/build&gt;
+&lt;/project&gt;</code></pre>
+                            </li>
+                            <li>Fallback starters (only if your Lab-02 is incomplete). Copy the files into
+                                <code>src/main/java/edu/itc/salesreport/…</code> as their <code>package</code> line
+                                says.
+                                <p class="mt-2 mb-1"><a class="hint-btn" data-bs-toggle="collapse" href="#fallbackA"
+                                        role="button"><i class="bi bi-box-seam"></i> Fallback starter A: model, parser,
+                                        engine, data generator</a></p>
+                                <div class="collapse" id="fallbackA">
+                                    <pre><code class="language-java">package edu.itc.salesreport.model;
+
+public enum PaymentMethod { CASH, CARD, KHQR }
+package edu.itc.salesreport.model;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+
+public record SaleTransaction(String branch, LocalDate date, String receiptNo,
+        String sku, String productName, String category, int quantity,
+        BigDecimal unitPrice, BigDecimal discount,
+        PaymentMethod paymentMethod) {
+
+    /** quantity x unit price - discount, scale 2, HALF_UP. */
+    public BigDecimal revenue() {
+        return unitPrice.multiply(BigDecimal.valueOf(quantity))
+                .subtract(discount)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+}
+package edu.itc.salesreport.model;
+
+import java.math.BigDecimal;
+
+public record ProductTotal(String sku, String productName,
+        BigDecimal revenue, long quantity) { }
+package edu.itc.salesreport.model;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.Map;
+
+public record BranchSummary(String branch, BigDecimal revenue,
+        BigDecimal discounts, long receipts,
+        Map&lt;String, BigDecimal&gt; revenueByCategory,
+        List&lt;ProductTotal&gt; topProducts,
+        Map&lt;PaymentMethod, BigDecimal&gt; revenueByPayment) {
+
+    /** Revenue per receipt, scale 2; zero when there are no receipts. */
+    public BigDecimal averageBasket() {
+        return receipts == 0 ? BigDecimal.ZERO.setScale(2)
+                : revenue.divide(BigDecimal.valueOf(receipts), 2,
+                        RoundingMode.HALF_UP);
+    }
+}
+package edu.itc.salesreport.model;
+
+import java.time.YearMonth;
+import java.util.List;
+
+public record MonthlyReport(YearMonth month, List&lt;BranchSummary&gt; branches,
+        BranchSummary chain, List&lt;String&gt; anomalies) { }
+package edu.itc.salesreport.model;
+
+public class InvalidRowException extends Exception {
+    public InvalidRowException(String message) { super(message); }
+}
+package edu.itc.salesreport.model;
+
+public interface TransactionParser {
+    SaleTransaction parse(String line) throws InvalidRowException;
+}
+package edu.itc.salesreport.model;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.YearMonth;
+
+public interface ReportEngine {
+    MonthlyReport generate(YearMonth month, Path dataDir) throws IOException;
+}</code></pre>
+                                    <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ingest;
+
+import edu.itc.salesreport.model.InvalidRowException;
+import edu.itc.salesreport.model.PaymentMethod;
+import edu.itc.salesreport.model.SaleTransaction;
+import edu.itc.salesreport.model.TransactionParser;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+/** Parses one data row of the canonical 10-column branch CSV. */
+public final class CsvTransactionParser implements TransactionParser {
+
+    @Override
+    public SaleTransaction parse(String line) throws InvalidRowException {
+        String[] f = line.split(",", -1);
+        if (f.length != 10) {
+            throw new InvalidRowException("expected 10 fields: " + line);
+        }
+        try {
+            return new SaleTransaction(f[0], LocalDate.parse(f[1]), f[2],
+                    f[3], f[4], f[5], Integer.parseInt(f[6]),
+                    new BigDecimal(f[7]), new BigDecimal(f[8]),
+                    PaymentMethod.valueOf(f[9]));
+        } catch (RuntimeException e) {
+            throw new InvalidRowException(e.getMessage() + ": " + line);
+        }
+    }
+}</code></pre>
+                                    <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ingest;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
+
+/** Seeded generator of canonical branch CSV files (small sample version). */
+public final class SalesDataGenerator {
+
+    private record Product(String sku, String name, String category,
+            String price) { }
+
+    private static final List&lt;Product&gt; PRODUCTS = List.of(
+        new Product("SKU-1001", "Jasmine Rice 5kg", "Grocery", "6.50"),
+        new Product("SKU-1002", "Fish Sauce 700ml", "Grocery", "1.80"),
+        new Product("SKU-2001", "Angkor Beer 330ml", "Beverages", "0.90"),
+        new Product("SKU-2002", "Iced Coffee 250ml", "Beverages", "1.20"),
+        new Product("SKU-3001", "Laundry Powder 1kg", "Household", "3.40"),
+        new Product("SKU-4001", "Shampoo 400ml", "Personal Care", "4.10"),
+        new Product("SKU-5001", "USB-C Cable 1m", "Electronics", "5.00"),
+        new Product("SKU-6001", "Notebook A5", "Stationery", "0.75"));
+    private static final String[] BRANCHES = { "PNH", "REP", "BTB" };
+    private static final String[] PAYMENTS = { "CASH", "CARD", "KHQR" };
+    private static final String HEADER = "branch,date,receipt_no,sku,"
+        + "product_name,category,quantity,unit_price,discount,payment_method";
+
+    /** Arguments: month rowsPerDay seed dataDir, e.g. 2026-08 5000 42 data */
+    public static void main(String[] args) throws IOException {
+        new SalesDataGenerator().generate(YearMonth.parse(args[0]),
+                Integer.parseInt(args[1]), Long.parseLong(args[2]),
+                Path.of(args[3]));
+    }
+
+    public void generate(YearMonth month, int rowsPerDay, long seed,
+            Path dataDir) throws IOException {
+        Random rnd = new Random(seed);
+        Path dir = dataDir.resolve(month.toString());
+        Files.createDirectories(dir);
+        for (String branch : BRANCHES) {
+            int receipt = 0;
+            for (int d = 1; d &lt;= month.lengthOfMonth(); d++) {
+                LocalDate date = month.atDay(d);
+                Path file = dir.resolve(branch + "-" + date + ".csv");
+                try (var out = new PrintWriter(Files.newBufferedWriter(
+                        file, StandardCharsets.UTF_8))) {
+                    out.println(HEADER);
+                    for (int r = 0; r &lt; rowsPerDay; r++) {
+                        if (r % 3 == 0) receipt++;
+                        Product p = PRODUCTS.get(rnd.nextInt(PRODUCTS.size()));
+                        int qty = 1 + rnd.nextInt(4);
+                        String discount =
+                                rnd.nextInt(10) == 0 ? "0.50" : "0.00";
+                        out.println(String.format(Locale.ROOT,
+                            "%s,%s,%s-%06d,%s,%s,%s,%d,%s,%s,%s", branch, date,
+                            branch, receipt, p.sku(), p.name(), p.category(),
+                            qty, p.price(), discount,
+                            PAYMENTS[rnd.nextInt(PAYMENTS.length)]));
+                    }
+                }
+            }
+        }
+    }
+}</code></pre>
+                                    <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.engine;
+
+import edu.itc.salesreport.ingest.CsvTransactionParser;
+import edu.itc.salesreport.model.BranchSummary;
+import edu.itc.salesreport.model.InvalidRowException;
+import edu.itc.salesreport.model.MonthlyReport;
+import edu.itc.salesreport.model.PaymentMethod;
+import edu.itc.salesreport.model.ProductTotal;
+import edu.itc.salesreport.model.ReportEngine;
+import edu.itc.salesreport.model.SaleTransaction;
+import edu.itc.salesreport.model.TransactionParser;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Stream;
+
+/** Sequential engine: reads one branch or all branches of a month. */
+public final class SimpleReportEngine implements ReportEngine {
+
+    public static final List&lt;String&gt; BRANCHES = List.of("PNH", "REP", "BTB");
+    private final TransactionParser parser = new CsvTransactionParser();
+
+    @Override
+    public MonthlyReport generate(YearMonth month, Path dataDir)
+            throws IOException {
+        List&lt;BranchSummary&gt; branches = new ArrayList&lt;&gt;();
+        List&lt;SaleTransaction&gt; all = new ArrayList&lt;&gt;();
+        List&lt;String&gt; anomalies = new ArrayList&lt;&gt;();
+        for (String b : BRANCHES) {
+            List&lt;SaleTransaction&gt; rows = read(month, b, dataDir, anomalies);
+            all.addAll(rows);
+            branches.add(summarize(b, rows));
+        }
+        return new MonthlyReport(month, branches, summarize("ALL", all),
+                anomalies);
+    }
+
+    /** Summary of one branch for one month. */
+    public BranchSummary summarizeBranch(YearMonth month, String branch,
+            Path dataDir) throws IOException {
+        return summarize(branch,
+                read(month, branch, dataDir, new ArrayList&lt;&gt;()));
+    }
+
+    private List&lt;SaleTransaction&gt; read(YearMonth month, String branch,
+            Path dataDir, List&lt;String&gt; anomalies) throws IOException {
+        Path dir = dataDir.resolve(month.toString());
+        List&lt;SaleTransaction&gt; rows = new ArrayList&lt;&gt;();
+        if (!Files.isDirectory(dir)) return rows;
+        List&lt;Path&gt; files;
+        try (Stream&lt;Path&gt; s = Files.list(dir)) {
+            files = s.filter(p -&gt; p.getFileName().toString()
+                    .startsWith(branch + "-")).sorted().toList();
+        }
+        for (Path f : files) {
+            List&lt;String&gt; lines = Files.readAllLines(f);
+            for (String line : lines.subList(1, lines.size())) {
+                if (line.isBlank()) continue;
+                try {
+                    rows.add(parser.parse(line));
+                } catch (InvalidRowException e) {
+                    anomalies.add(f.getFileName() + ": " + e.getMessage());
+                }
+            }
+        }
+        return rows;
+    }
+
+    private static BranchSummary summarize(String branch,
+            List&lt;SaleTransaction&gt; rows) {
+        BigDecimal revenue = BigDecimal.ZERO.setScale(2);
+        BigDecimal discounts = BigDecimal.ZERO.setScale(2);
+        Set&lt;String&gt; receipts = new HashSet&lt;&gt;();
+        Map&lt;String, BigDecimal&gt; byCategory = new TreeMap&lt;&gt;();
+        Map&lt;PaymentMethod, BigDecimal&gt; byPayment =
+                new EnumMap&lt;&gt;(PaymentMethod.class);
+        Map&lt;String, ProductTotal&gt; products = new TreeMap&lt;&gt;();
+        for (SaleTransaction t : rows) {
+            BigDecimal r = t.revenue();
+            revenue = revenue.add(r);
+            discounts = discounts.add(t.discount());
+            receipts.add(t.receiptNo());
+            byCategory.merge(t.category(), r, BigDecimal::add);
+            byPayment.merge(t.paymentMethod(), r, BigDecimal::add);
+            products.merge(t.sku(), new ProductTotal(t.sku(),
+                    t.productName(), r, t.quantity()),
+                (a, b) -&gt; new ProductTotal(a.sku(), a.productName(),
+                    a.revenue().add(b.revenue()),
+                    a.quantity() + b.quantity()));
+        }
+        List&lt;ProductTotal&gt; top = products.values().stream()
+                .sorted(Comparator.comparing(ProductTotal::revenue)
+                        .reversed())
+                .limit(10).toList();
+        return new BranchSummary(branch, revenue, discounts,
+                receipts.size(), byCategory, top, byPayment);
+    }
+}</code></pre>
+                                </div>
+                                <p class="mt-2 mb-1"><a class="hint-btn" data-bs-toggle="collapse" href="#fallbackB"
+                                        role="button"><i class="bi bi-box-seam"></i> Fallback starter B: minimal Lab-02
+                                        MVC viewer</a></p>
+                                <div class="collapse" id="fallbackB">
+                                    <pre><code class="language-java">package edu.itc.salesreport.ui.mvc;
+
+import edu.itc.salesreport.engine.SimpleReportEngine;
+import edu.itc.salesreport.model.BranchSummary;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.List;
+import javafx.application.Application;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
+
+/** Fallback Lab-02 viewer (MVC): the controller reads and writes controls. */
+public class MvcReportViewerApp extends Application {
+
+    @Override
+    public void start(Stage stage) {
+        ComboBox&lt;YearMonth&gt; month = new ComboBox&lt;&gt;();
+        YearMonth now = YearMonth.now();
+        for (int i = 0; i &lt; 12; i++) month.getItems().add(now.minusMonths(i));
+        List&lt;CheckBox&gt; branches = new ArrayList&lt;&gt;();
+        for (String b : SimpleReportEngine.BRANCHES) {
+            CheckBox box = new CheckBox(b);
+            box.setSelected(true);
+            branches.add(box);
+        }
+        Button generate = new Button("Generate");
+        Label status = new Label();
+        TableView&lt;BranchSummary&gt; table = new TableView&lt;&gt;();
+        TableColumn&lt;BranchSummary, String&gt; branch = new TableColumn&lt;&gt;("Branch");
+        branch.setCellValueFactory(
+                c -&gt; new SimpleStringProperty(c.getValue().branch()));
+        TableColumn&lt;BranchSummary, String&gt; revenue =
+                new TableColumn&lt;&gt;("Revenue");
+        revenue.setCellValueFactory(c -&gt; new SimpleStringProperty(
+                c.getValue().revenue().toPlainString()));
+        table.getColumns().add(branch);
+        table.getColumns().add(revenue);
+
+        var controller = new ReportController(new SimpleReportEngine(),
+                Path.of(getParameters().getNamed()
+                        .getOrDefault("data", "data")),
+                month, branches, status, table);
+        generate.setOnAction(e -&gt; controller.onGenerate());
+
+        HBox top = new HBox(8, month, generate, status);
+        top.getChildren().addAll(1, branches);
+        stage.setScene(new Scene(new BorderPane(table, top, null, null, null),
+                800, 500));
+        stage.setTitle("Angkor Mart · Monthly report (MVC)");
+        stage.show();
+    }
+
+    /** Controller: validation, loading and display mixed with controls. */
+    static final class ReportController {
+        private final SimpleReportEngine engine;
+        private final Path dataDir;
+        private final ComboBox&lt;YearMonth&gt; month;
+        private final List&lt;CheckBox&gt; branches;
+        private final Label status;
+        private final TableView&lt;BranchSummary&gt; table;
+
+        ReportController(SimpleReportEngine engine, Path dataDir,
+                ComboBox&lt;YearMonth&gt; month, List&lt;CheckBox&gt; branches,
+                Label status, TableView&lt;BranchSummary&gt; table) {
+            this.engine = engine;
+            this.dataDir = dataDir;
+            this.month = month;
+            this.branches = branches;
+            this.status = status;
+            this.table = table;
+        }
+
+        void onGenerate() {
+            YearMonth m = month.getValue();
+            if (m == null) {
+                status.setText("Choose a month.");
+                return;
+            }
+            List&lt;BranchSummary&gt; rows = new ArrayList&lt;&gt;();
+            try {
+                for (CheckBox box : branches) {
+                    if (box.isSelected()) {
+                        // runs on the FX thread: the window freezes
+                        rows.add(engine.summarizeBranch(m, box.getText(),
+                                dataDir));
+                    }
+                }
+            } catch (IOException e) {
+                status.setText("Load failed: " + e.getMessage());
+                return;
+            }
+            table.getItems().setAll(rows);
+            status.setText("Loaded " + rows.size() + " branch(es).");
+        }
+    }
+}</code></pre>
+                                    <p class="small text-secondary mt-1 mb-0">Run it with
+                                        <code>mvn -q javafx:run -Dapp.main=edu.itc.salesreport.ui.mvc.MvcReportViewerApp</code>.
+                                        Note how the controller holds five controls and loads on the FX thread: this is
+                                        what you refactor.</p>
+                                </div>
+                            </li>
+                            <li>Files this lab adds (code goes into the Maven project, written deliverables into
+                                <code>lab03/</code>):
+                                <pre><code class="language-plaintext">src/main/java/edu/itc/salesreport/ui/
+  Command.java  DelegateCommand.java        (Task 1)
+  SummarySource.java  BackgroundJobs.java   (Task 1)
+  ReportViewModel.java                      (Tasks 1-4)
+  ReportView.java  ReportViewerApp.java     (Task 2)
+  CallerThreadJobs.java                     (Task 2)
+  FxBackgroundJobs.java                     (Task 4)
+  FrameGapMonitor.java  LoadBenchmarkApp.java (Task 4)
+  DashboardView.java  DashboardWindow.java  (challenge)
+src/test/java/edu/itc/salesreport/ui/
+  ManualJobs.java  ReportViewModelTest.java  ViewModelImportsTest.java
+lab03/
+  README.md                 (Task 5: record what changed)
+  viewmodel-design.md       (Tasks 1 and 3: tables, class and state diagrams)
+  measurements.md           (Task 4)
+  mvc-vs-mvvm.md            (Task 5)
+  platform-mapping.md       (challenge)
+  screenshots/viewer.png  screenshots/dashboard.png</code></pre>
+                            </li>
+                        </ol>
+                    </div>
+                </section>
+
+                <!-- ===================== TASK 1 ===================== -->
+                <section class="task card mb-4" id="task1">
+                    <div class="card-header task-header">
+                        <span class="task-number text-bg-primary">1</span>
+                        <h2 class="h4 mb-0">Design the ViewModel</h2>
+                        <span class="badge text-bg-success">Easy</span>
+                        <span class="badge text-bg-light ms-auto">45 min</span>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+                        <p>Decide what the screen's state, rules and actions are, express them as properties, bindings
+                            and commands of <code>ReportViewModel</code>, and document the design with a class diagram,
+                            before touching the view.</p>
+
+                        <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+                        <ol class="step-list">
+                            <li>Inventory your Lab-02 controller (or <code>ReportController</code> of starter B): in
+                                <code>lab03/viewmodel-design.md</code> write a table with one row per control it reads
+                                or writes and per <code>if</code> it contains, with columns <em>code</em>,
+                                <em>concern</em>, <em>new owner</em> (Model, ViewModel or View). Expect at least 8 rows.
+                            </li>
+                            <li>List the ViewModel members in three groups: <strong>input</strong> (<code>month</code>,
+                                <code>branchSelected(b)</code>, <code>productFilter</code>), <strong>output</strong>
+                                (<code>summaries</code>, <code>visibleProducts</code>, <code>loading</code>,
+                                <code>progress</code>, <code>status</code>, <code>loadError</code>,
+                                <code>monthChoices</code>), <strong>computed</strong> (<code>monthError</code>,
+                                <code>branchError</code>, <code>validationMessage</code>, <code>canGenerate</code>,
+                                <code>totalRevenue</code>, <code>totalRevenueText</code>), plus the commands
+                                <code>generate</code> and <code>cancel</code>. For each, note whether the view may write
+                                it.</li>
+                            <li>Add the ports <code>SummarySource</code> (the model seen by the ViewModel) and
+                                <code>BackgroundJobs</code> (threading), and <code>Command</code> with
+                                <code>DelegateCommand</code>, exactly as in the starter.</li>
+                            <li>Create <code>ReportViewModel</code> from the skeleton. Every output is exposed with a
+                                read-only type (<code>ReadOnly*Property</code>, <code>unmodifiableObservableList</code>,
+                                <code>StringExpression</code>, <code>ObservableBooleanValue</code>).</li>
+                            <li>Draw the class diagram (Mermaid <code>classDiagram</code>) in
+                                <code>lab03/viewmodel-design.md</code>: view classes, ViewModel, ports, model, test
+                                doubles; mark interfaces.</li>
+                            <li>Check the import rule and compile:
+                                <code>grep -n "^import javafx" src/main/java/edu/itc/salesreport/ui/ReportViewModel.java</code>
+                                shows only <code>javafx.beans</code> and <code>javafx.collections</code>;
+                                <code>mvn -q compile</code> passes.</li>
+                        </ol>
+
+                        <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+                        <pre><code class="language-java">package edu.itc.salesreport.ui;
+
+import javafx.beans.value.ObservableBooleanValue;
+
+/** An action the view can trigger, plus an observable "can run now" flag. */
+public interface Command {
+
+    ObservableBooleanValue executableProperty();
+
+    void execute();
+
+    default boolean isExecutable() {
+        return executableProperty().get();
+    }
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+import java.util.Objects;
+import javafx.beans.value.ObservableBooleanValue;
+
+/** Command that delegates to a Runnable and guards it with a condition. */
+public final class DelegateCommand implements Command {
+
+    private final Runnable action;
+    private final ObservableBooleanValue executable;
+
+    public DelegateCommand(Runnable action,
+                           ObservableBooleanValue executable) {
+        this.action = Objects.requireNonNull(action);
+        this.executable = Objects.requireNonNull(executable);
+    }
+
+    @Override
+    public ObservableBooleanValue executableProperty() {
+        return executable;
+    }
+
+    @Override
+    public void execute() {
+        // ignore calls while disabled (key shortcuts, double clicks)
+        if (executable.get()) {
+            action.run();
+        }
+    }
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+import edu.itc.salesreport.model.BranchSummary;
+import java.time.YearMonth;
+
+/** What the ViewModel needs from the model: one branch summary at a time. */
+@FunctionalInterface
+public interface SummarySource {
+    BranchSummary load(YearMonth month, String branch) throws Exception;
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+/**
+ * Runs work off the UI thread. Every JobListener callback is delivered
+ * on the UI thread, so the ViewModel may update its properties there.
+ */
+public interface BackgroundJobs {
+
+    &lt;T&gt; JobHandle submit(Work&lt;T&gt; work, JobListener&lt;T&gt; listener);
+
+    /** The work itself: runs on a worker thread, touches no property. */
+    @FunctionalInterface
+    interface Work&lt;T&gt; {
+        T run(ProgressSink progress) throws Exception;
+    }
+
+    /** Given to the work so it can report progress and see cancellation. */
+    interface ProgressSink {
+        void update(long done, long total);
+        boolean isCancelled();
+    }
+
+    /** Outcome callbacks, always called on the UI thread. */
+    interface JobListener&lt;T&gt; {
+        void progress(double fraction);
+        void succeeded(T value);
+        void failed(Throwable error);
+        void cancelled();
+    }
+
+    @FunctionalInterface
+    interface JobHandle {
+        void cancel();
+    }
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+import edu.itc.salesreport.model.BranchSummary;
+import edu.itc.salesreport.model.ProductTotal;
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.YearMonth;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.binding.StringBinding;
+import javafx.beans.binding.StringExpression;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleWrapper;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableObjectValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+
+/** Task 1 skeleton: state, commands and ports. javafx.base only. */
+public final class ReportViewModel {
+
+    public static final List&lt;String&gt; BRANCHES = List.of("PNH", "REP", "BTB");
+
+    private final SummarySource source;
+    private final BackgroundJobs jobs;
+    private final Clock clock;
+
+    // ---- input state: two-way bound by the view
+    private final ObjectProperty&lt;YearMonth&gt; month =
+            new SimpleObjectProperty&lt;&gt;(this, "month");
+    private final Map&lt;String, BooleanProperty&gt; branchSelected =
+            new LinkedHashMap&lt;&gt;();
+    private final StringProperty productFilter =
+            new SimpleStringProperty(this, "productFilter", "");
+
+    // ---- output state: one-way bound by the view
+    private final ObservableList&lt;YearMonth&gt; monthChoices =
+            FXCollections.observableArrayList();
+    private final ObservableList&lt;BranchSummary&gt; summaries =
+            FXCollections.observableArrayList();
+    private final ObservableList&lt;ProductTotal&gt; products =
+            FXCollections.observableArrayList();
+    private final FilteredList&lt;ProductTotal&gt; visibleProducts =
+            new FilteredList&lt;&gt;(products);
+    private final ReadOnlyBooleanWrapper loading =
+            new ReadOnlyBooleanWrapper(this, "loading", false);
+    private final ReadOnlyDoubleWrapper progress =
+            new ReadOnlyDoubleWrapper(this, "progress", 0);
+    private final ReadOnlyStringWrapper status =
+            new ReadOnlyStringWrapper(this, "status", "Choose a month.");
+    private final ReadOnlyStringWrapper loadError =
+            new ReadOnlyStringWrapper(this, "loadError", "");
+
+    // ---- computed state (Task 3 replaces the placeholders)
+    private final StringBinding monthError;
+    private final StringBinding branchError;
+    private final StringBinding validationMessage;
+    private final BooleanBinding canGenerate;
+    private final ObjectBinding&lt;BigDecimal&gt; totalRevenue;
+    private final StringBinding totalRevenueText;
+
+    private final Command generateCommand;
+    private final Command cancelCommand;
+    private BackgroundJobs.JobHandle running;
+
+    public ReportViewModel(SummarySource source, BackgroundJobs jobs,
+                           Clock clock) {
+        this.source = Objects.requireNonNull(source);
+        this.jobs = Objects.requireNonNull(jobs);
+        this.clock = Objects.requireNonNull(clock);
+        YearMonth now = YearMonth.now(clock);
+        for (int i = 0; i &lt; 12; i++) {
+            monthChoices.add(now.minusMonths(i));
+        }
+        for (String b : BRANCHES) {
+            branchSelected.put(b, new SimpleBooleanProperty(this, b, true));
+        }
+        // TODO Task 3: real rules (future month, empty branch selection)
+        monthError = Bindings.createStringBinding(() -&gt; "", month);
+        branchError = Bindings.createStringBinding(() -&gt; "");
+        validationMessage = Bindings.createStringBinding(() -&gt; "");
+        canGenerate = month.isNotNull().and(loading.not());
+        // TODO Task 2: sum of summaries' revenue, formatted "USD 1,234.50"
+        totalRevenue = Bindings.createObjectBinding(() -&gt; BigDecimal.ZERO);
+        totalRevenueText = Bindings.createStringBinding(() -&gt; "USD 0.00");
+        // TODO Task 2: bind visibleProducts' predicate to productFilter
+
+        generateCommand = new DelegateCommand(this::generate, canGenerate);
+        cancelCommand = new DelegateCommand(this::cancel,
+                loading.getReadOnlyProperty());
+    }
+
+    public List&lt;String&gt; selectedBranches() {
+        return branchSelected.entrySet().stream()
+                .filter(e -&gt; e.getValue().get())
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+
+    private void generate() {
+        // TODO Task 2: snapshot month and selectedBranches(), set loading,
+        // then jobs.submit(sink -&gt; loadAll(...), listener); the listener
+        // fills summaries/products on success and resets loading.
+        // TODO Task 4: progress, cancelled(), failed() -&gt; loadError
+    }
+
+    private void cancel() {
+        // TODO Task 4: cancel the running job, if any
+    }
+
+    // ---- accessors: read-only types for everything the view must not set
+    public ObjectProperty&lt;YearMonth&gt; monthProperty() { return month; }
+    public BooleanProperty branchSelectedProperty(String branch) {
+        return Objects.requireNonNull(branchSelected.get(branch), branch);
+    }
+    public StringProperty productFilterProperty() { return productFilter; }
+    public ObservableList&lt;YearMonth&gt; monthChoices() {
+        return FXCollections.unmodifiableObservableList(monthChoices);
+    }
+    public ObservableList&lt;BranchSummary&gt; summaries() {
+        return FXCollections.unmodifiableObservableList(summaries);
+    }
+    public ObservableList&lt;ProductTotal&gt; visibleProducts() {
+        return visibleProducts;
+    }
+    public ReadOnlyBooleanProperty loadingProperty() {
+        return loading.getReadOnlyProperty();
+    }
+    public ReadOnlyDoubleProperty progressProperty() {
+        return progress.getReadOnlyProperty();
+    }
+    public ReadOnlyStringProperty statusProperty() {
+        return status.getReadOnlyProperty();
+    }
+    public ReadOnlyStringProperty loadErrorProperty() {
+        return loadError.getReadOnlyProperty();
+    }
+    public StringExpression monthErrorProperty() { return monthError; }
+    public StringExpression branchErrorProperty() { return branchError; }
+    public StringExpression validationMessageProperty() {
+        return validationMessage;
+    }
+    public ObservableBooleanValue canGenerateProperty() { return canGenerate; }
+    public ObservableObjectValue&lt;BigDecimal&gt; totalRevenueProperty() {
+        return totalRevenue;
+    }
+    public StringExpression totalRevenueTextProperty() {
+        return totalRevenueText;
+    }
+    public Command generateCommand() { return generateCommand; }
+    public Command cancelCommand() { return cancelCommand; }
+}</code></pre>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+                        <p class="small mb-1">Your class diagram should contain at least these elements:</p>
+                        <pre class="mermaid">
+classDiagram
+  direction LR
+  class ReportView
+  class ReportViewModel {
+    +monthProperty() ObjectProperty~YearMonth~
+    +branchSelectedProperty(String) BooleanProperty
+    +summaries() ObservableList~BranchSummary~
+    +canGenerateProperty() ObservableBooleanValue
+    +generateCommand() Command
+    +cancelCommand() Command
+  }
+  class Command {
+    &lt;&lt;interface&gt;&gt;
+    +executableProperty() ObservableBooleanValue
+    +execute()
+  }
+  class SummarySource {
+    &lt;&lt;interface&gt;&gt;
+    +load(YearMonth, String) BranchSummary
+  }
+  class BackgroundJobs {
+    &lt;&lt;interface&gt;&gt;
+    +submit(Work, JobListener) JobHandle
+  }
+  class DelegateCommand
+  class BranchSummary
+  ReportView --> ReportViewModel : binds
+  ReportViewModel --> Command
+  DelegateCommand ..|> Command
+  ReportViewModel --> SummarySource
+  ReportViewModel --> BackgroundJobs
+  ReportViewModel ..> BranchSummary
+</pre>
+                        <pre class="mt-2"><code class="language-plaintext">$ grep -n "^import javafx" src/main/java/edu/itc/salesreport/ui/ReportViewModel.java
+21:import javafx.beans.Observable;
+22:import javafx.beans.binding.Bindings;
+...
+42:import javafx.collections.ObservableList;
+43:import javafx.collections.transformation.FilteredList;</code></pre>
+
+                        <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint1" role="button"><i
+                                    class="bi bi-lightbulb"></i> Show hints</a></p>
+                        <div class="collapse" id="hint1">
+                            <div class="card card-body bg-body-tertiary small">
+                                <ul class="mb-0">
+                                    <li>Ask of each piece of state: "would a unit test want to assert on it?" If yes, it
+                                        belongs in the ViewModel, even formatting such as <code>USD 600.00</code>.</li>
+                                    <li>One <code>BooleanProperty</code> per branch binds cleanly to a
+                                        <code>CheckBox</code> with <code>bindBidirectional</code>; a single
+                                        <code>ObservableList&lt;String&gt;</code> of selected branches does not.</li>
+                                    <li><code>ReadOnlyBooleanWrapper</code> gives you a writable property inside the
+                                        class and <code>getReadOnlyProperty()</code> for the outside.</li>
+                                    <li>Mermaid generics use tildes: <code>ObservableList~BranchSummary~</code>.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+                        <div class="check-list" data-task="t1">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t1a"><label
+                                    class="form-check-label" for="t1a"><code>lab03/viewmodel-design.md</code> has the
+                                    controller inventory (at least 8 rows) with a new owner per row.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t1b"><label
+                                    class="form-check-label" for="t1b">The Mermaid class diagram renders on GitHub and
+                                    shows view, ViewModel, the three interfaces and the model.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t1c"><label
+                                    class="form-check-label" for="t1c"><code>ReportViewModel</code> exposes outputs with
+                                    read-only types only, and imports only <code>javafx.beans</code> and
+                                    <code>javafx.collections</code>.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t1d"><label
+                                    class="form-check-label" for="t1d"><code>mvn -q compile</code> passes with the new
+                                    classes.</label></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== TASK 2 ===================== -->
+                <section class="task card mb-4" id="task2">
+                    <div class="card-header task-header">
+                        <span class="task-number text-bg-primary">2</span>
+                        <h2 class="h4 mb-0">Bind the view, remove the controller logic</h2>
+                        <span class="badge text-bg-success">Easy</span>
+                        <span class="badge text-bg-light ms-auto">60 min</span>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+                        <p>Replace the Lab-02 controller by a view that only creates controls and binds them to the
+                            ViewModel, implement <code>generate</code> through the <code>BackgroundJobs</code> port
+                            (still on the calling thread for now), and leave the model package unchanged.</p>
+
+                        <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+                        <ol class="step-list">
+                            <li>Complete <code>ReportView</code> (code, as in the starter, or FXML plus a thin view
+                                class whose <code>initialize()</code> only binds). Two-way: month combo, branch check
+                                boxes, product filter. One-way: progress bar, status, validation, error, total, table
+                                items, product list.</li>
+                            <li>Wire each button with exactly two statements:
+                                <code>setOnAction(e -&gt; cmd.execute())</code> and
+                                <code>disableProperty().bind(Bindings.not(cmd.executableProperty()))</code>.</li>
+                            <li>Implement <code>generate()</code> in the ViewModel: snapshot <code>month</code> and
+                                <code>selectedBranches()</code> into locals, set <code>loading</code> and
+                                <code>status</code>, call
+                                <code>jobs.submit(sink -&gt; loadAll(m, branches, sink), listener)</code>; on success
+                                fill <code>summaries</code> and the merged top products, set <code>status</code> to
+                                "Loaded 3 branch(es) for 2026-08." and reset <code>loading</code>.</li>
+                            <li>Implement <code>totalRevenue</code>, <code>totalRevenueText</code> ("USD 12,345.60",
+                                <code>NumberFormat</code> with <code>Locale.US</code> and 2 decimals) and the
+                                <code>visibleProducts</code> predicate bound to <code>productFilter</code>.</li>
+                            <li>Write the composition root <code>ReportViewerApp</code> with
+                                <code>CallerThreadJobs</code> and a <code>SummarySource</code> lambda over your Lab-02
+                                model.</li>
+                            <li>Delete the logic of the old controller (keep the Lab-02 viewer only under
+                                <code>ui/mvc</code> or at tag <code>lab-02-final</code> for Task 5). Prove the model is
+                                unchanged:
+                                <code>git diff --stat lab-02-final -- src/main/java/edu/itc/salesreport/model</code>
+                                prints nothing.</li>
+                            <li>Run <code>mvn -q javafx:run</code>, load 2026-08 for all branches and compare the three
+                                revenues with the Lab-02 viewer: they must be identical. Save
+                                <code>lab03/screenshots/viewer.png</code>.</li>
+                        </ol>
+
+                        <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+                        <pre><code class="language-java">package edu.itc.salesreport.ui;
+
+import edu.itc.salesreport.model.BranchSummary;
+import edu.itc.salesreport.model.ProductTotal;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
+import java.util.function.Function;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.geometry.Insets;
+import javafx.scene.Parent;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
+
+/** Task 2 skeleton: build controls and bind them. No logic here. */
+public final class ReportView {
+
+    private final BorderPane root = new BorderPane();
+
+    public ReportView(ReportViewModel vm) {
+        ComboBox&lt;YearMonth&gt; month = new ComboBox&lt;&gt;(vm.monthChoices());
+        month.setEditable(true);
+        month.setConverter(new YearMonthConverter());
+        month.valueProperty().bindBidirectional(vm.monthProperty());
+
+        HBox filters = new HBox(8, new Label("Month"), month);
+        for (String b : ReportViewModel.BRANCHES) {
+            CheckBox box = new CheckBox(b);
+            // TODO two-way: box.selectedProperty() &lt;-&gt; branchSelected(b)
+            filters.getChildren().add(box);
+        }
+
+        Button generate = new Button("Generate");
+        generate.setOnAction(e -&gt; vm.generateCommand().execute());
+        generate.disableProperty().bind(
+                Bindings.not(vm.generateCommand().executableProperty()));
+        Button cancel = new Button("Cancel");
+        // TODO same two lines for vm.cancelCommand()
+        filters.getChildren().addAll(generate, cancel);
+
+        ProgressBar bar = new ProgressBar();
+        Label validation = new Label();
+        Label status = new Label();
+        Label error = new Label();
+        Label total = new Label();
+        // TODO one-way: bar.progress, bar.visible, validation.text,
+        //      status.text, error.text, total.text
+
+        TableView&lt;BranchSummary&gt; table = new TableView&lt;&gt;(vm.summaries());
+        table.getColumns().add(column("Branch", BranchSummary::branch));
+        table.getColumns().add(column("Revenue",
+                s -&gt; s.revenue().toPlainString()));
+        // TODO columns Discounts, Receipts, Avg basket
+
+        TextField search = new TextField();
+        search.setPromptText("Filter products");
+        // TODO two-way: search.text &lt;-&gt; vm.productFilter
+        ListView&lt;ProductTotal&gt; productList =
+                new ListView&lt;&gt;(vm.visibleProducts());
+
+        VBox top = new VBox(6, filters, validation,
+                new HBox(8, bar, status, error));
+        top.setPadding(new Insets(10));
+        root.setTop(top);
+        root.setCenter(table);
+        root.setRight(new VBox(6, new Label("Top products"), search,
+                productList));
+        root.setBottom(new HBox(8, new Label("Chain revenue:"), total));
+    }
+
+    private static TableColumn&lt;BranchSummary, String&gt; column(String title,
+            Function&lt;BranchSummary, String&gt; value) {
+        TableColumn&lt;BranchSummary, String&gt; c = new TableColumn&lt;&gt;(title);
+        c.setCellValueFactory(
+                cell -&gt; new SimpleStringProperty(value.apply(cell.getValue())));
+        return c;
+    }
+
+    public Parent root() {
+        return root;
+    }
+
+    /** Text "2026-09" to YearMonth and back; null for unparsable input. */
+    static final class YearMonthConverter extends StringConverter&lt;YearMonth&gt; {
+        @Override
+        public String toString(YearMonth m) {
+            return m == null ? "" : m.toString();
+        }
+
+        @Override
+        public YearMonth fromString(String s) {
+            try {
+                return s == null || s.isBlank() ? null
+                        : YearMonth.parse(s.strip());
+            } catch (DateTimeParseException e) {
+                return null;
+            }
+        }
+    }
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+import edu.itc.salesreport.engine.SimpleReportEngine;
+import java.nio.file.Path;
+import java.time.Clock;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
+/** Composition root: the only class that knows every concrete type. */
+public class ReportViewerApp extends Application {
+
+    @Override
+    public void start(Stage stage) {
+        Path dataDir = Path.of(getParameters().getNamed()
+                .getOrDefault("data", "data"));
+        // adapt YOUR Lab-02 model here; the model code stays unchanged
+        var engine = new SimpleReportEngine();
+        SummarySource source =
+                (month, branch) -&gt; engine.summarizeBranch(month, branch,
+                        dataDir);
+        // Task 2: CallerThreadJobs (UI still freezes, like Lab-02)
+        // Task 4: new FxBackgroundJobs(workers)
+        var vm = new ReportViewModel(source, new CallerThreadJobs(),
+                Clock.systemDefaultZone());
+        stage.setScene(new Scene(new ReportView(vm).root(), 960, 600));
+        stage.setTitle("Angkor Mart · Monthly report (MVVM)");
+        stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+/**
+ * Runs the work immediately on the calling thread. Used as the
+ * "frozen UI" baseline in Lab-03 Task 4 and in simple tests.
+ */
+public final class CallerThreadJobs implements BackgroundJobs {
+
+    @Override
+    public &lt;T&gt; JobHandle submit(Work&lt;T&gt; work, JobListener&lt;T&gt; listener) {
+        ProgressSink sink = new ProgressSink() {
+            @Override
+            public void update(long done, long total) {
+                listener.progress((double) done / total);
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return false;
+            }
+        };
+        try {
+            listener.succeeded(work.run(sink));
+        } catch (Exception e) {
+            listener.failed(e);
+        }
+        return () -&gt; { };
+    }
+}</code></pre>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+                        <pre><code class="language-plaintext">$ git diff --stat lab-02-final -- src/main/java/edu/itc/salesreport/model
+$                                   (no output: model unchanged)
+
+$ grep -c "^import javafx.scene" src/main/java/edu/itc/salesreport/ui/*.java
+.../ReportView.java:13
+.../ReportViewModel.java:0
+
+Window after Generate (2026-08, all branches, 5,000 rows/day, seed 42):
+  status   "Loaded 3 branch(es) for 2026-08."
+  table    PNH / REP / BTB with the same revenue as the Lab-02 viewer
+  total    "USD …" equal to the sum of the three branch revenues
+  Generate disabled while the month box is empty</code></pre>
+
+                        <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint2" role="button"><i
+                                    class="bi bi-lightbulb"></i> Show hints</a></p>
+                        <div class="collapse" id="hint2">
+                            <div class="card card-body bg-body-tertiary small">
+                                <ul class="mb-0">
+                                    <li>Bind the control <em>to</em> the ViewModel:
+                                        <code>month.valueProperty().bindBidirectional(vm.monthProperty())</code>. The
+                                        argument's value wins when the binding starts.</li>
+                                    <li>"JavaFX runtime components are missing" means you ran an
+                                        <code>Application</code> subclass from the class path: use
+                                        <code>mvn javafx:run</code>, which puts JavaFX on the module path.</li>
+                                    <li>A bound property cannot be set: if <code>label.setText(…)</code> throws "A bound
+                                        value cannot be set", some logic is still in the view.</li>
+                                    <li>With <code>CallerThreadJobs</code> the listener is called before
+                                        <code>submit</code> returns; your <code>generate()</code> must therefore set
+                                        <code>loading</code> to true <em>before</em> calling <code>submit</code>.</li>
+                                    <li>Merge top products of several branches by SKU with <code>Map.merge</code>, then
+                                        sort by revenue, descending.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+                        <div class="check-list" data-task="t2">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t2a"><label
+                                    class="form-check-label" for="t2a">The view contains no <code>if</code>, no model
+                                    call and no <code>setText</code>/<code>setAll</code> on data: only control creation,
+                                    layout and bindings.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t2b"><label
+                                    class="form-check-label" for="t2b">Inputs are two-way bound, outputs one-way bound,
+                                    buttons wired to commands (2 statements each).</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t2c"><label
+                                    class="form-check-label" for="t2c">The model package is unchanged versus
+                                    <code>lab-02-final</code> (empty <code>git diff --stat</code>).</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t2d"><label
+                                    class="form-check-label" for="t2d">Revenues for 2026-08 match the Lab-02 viewer;
+                                    <code>lab03/screenshots/viewer.png</code> is committed.</label></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== TASK 3 ===================== -->
+                <section class="task card mb-4" id="task3">
+                    <div class="card-header task-header">
+                        <span class="task-number text-bg-primary">3</span>
+                        <h2 class="h4 mb-0">Validation and error state as properties</h2>
+                        <span class="badge text-bg-warning text-dark">Medium</span>
+                        <span class="badge text-bg-light ms-auto">60 min</span>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+                        <p>Express the screen rules (month in the future, empty branch selection) and the load errors as
+                            observable properties of the ViewModel, so that the view only decides how an error looks and
+                            every rule is testable without JavaFX.</p>
+
+                        <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+                        <ol class="step-list">
+                            <li>Replace the placeholder <code>monthError</code> with a binding on <code>month</code>
+                                that calls <code>checkMonth(YearMonth)</code>; "today" comes from the injected
+                                <code>Clock</code>, never from <code>YearMonth.now()</code> without argument.</li>
+                            <li>Make <code>branchError</code> depend on all three <code>branchSelected</code> properties
+                                (pass them as the binding's dependencies).</li>
+                            <li>Build <code>validationMessage</code> (non-empty messages joined by a space),
+                                <code>valid</code> and <code>canGenerate = valid.and(loading.not())</code>.</li>
+                            <li>In the job listener, <code>failed(e)</code> keeps the old <code>summaries</code>, sets
+                                <code>loadError</code> to the exception message and <code>status</code> to "Load failed,
+                                previous data kept.".</li>
+                            <li>In the view: red border on the month box while <code>monthError</code> is not empty
+                                (<code>Bindings.when(…).then(…).otherwise(…)</code>), the validation label bound to
+                                <code>validationMessage</code>, the error label bound to <code>loadError</code>.</li>
+                            <li>Check the five input combinations of the expected-output table by hand, and force a load
+                                error once (temporarily wrap the source so that <code>REP</code> throws
+                                <code>new IOException("REP-2026-08-03.csv: unreadable")</code>).</li>
+                            <li>Add the screen state machine (Mermaid <code>stateDiagram-v2</code>: Incomplete, Invalid,
+                                Ready, Loading, Loaded, Failed) to <code>lab03/viewmodel-design.md</code>, with the
+                                property values of each state.</li>
+                        </ol>
+
+                        <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+                        <pre><code class="language-java">// ReportViewModel constructor (replace the Task 1 placeholders)
+Observable[] flags = branchSelected.values().toArray(Observable[]::new);
+monthError = Bindings.createStringBinding(
+        () -&gt; checkMonth(month.get()), month);
+branchError = Bindings.createStringBinding(
+        () -&gt; /* TODO "Select at least one branch." or "" */ "",
+        flags);
+validationMessage = Bindings.createStringBinding(
+        () -&gt; Stream.of(monthError.get(), branchError.get())
+                .filter(s -&gt; !s.isEmpty())
+                .collect(Collectors.joining(" ")),
+        monthError, branchError);
+valid = monthError.isEmpty().and(branchError.isEmpty());
+canGenerate = valid.and(loading.not());
+
+private String checkMonth(YearMonth m) {
+    // TODO "Choose a month." when null,
+    //      "Month 2026-10 is in the future." after YearMonth.now(clock),
+    //      "" otherwise
+    return "";
+}
+
+// ReportView
+month.styleProperty().bind(Bindings
+        .when(vm.monthErrorProperty().isEmpty())
+        .then("").otherwise("-fx-border-color: crimson;"));
+validation.textProperty().bind(vm.validationMessageProperty());
+error.textProperty().bind(vm.loadErrorProperty());</code></pre>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+                        <p class="small mb-1">With today = 2026-09-27:</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered small">
+                                <thead class="table-active">
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Ticked branches</th>
+                                        <th><code>validationMessage</code></th>
+                                        <th>Generate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>(empty)</td>
+                                        <td>PNH, REP, BTB</td>
+                                        <td>Choose a month.</td>
+                                        <td>disabled</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2026-10</td>
+                                        <td>PNH, REP, BTB</td>
+                                        <td>Month 2026-10 is in the future.</td>
+                                        <td>disabled</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2026-08</td>
+                                        <td>none</td>
+                                        <td>Select at least one branch.</td>
+                                        <td>disabled</td>
+                                    </tr>
+                                    <tr>
+                                        <td>(empty)</td>
+                                        <td>none</td>
+                                        <td>Choose a month. Select at least one branch.</td>
+                                        <td>disabled</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2026-09</td>
+                                        <td>PNH</td>
+                                        <td>(empty)</td>
+                                        <td>enabled</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <pre class="mermaid">
+stateDiagram-v2
+  [*] --> Incomplete
+  Incomplete --> Invalid: future month or no branch
+  Incomplete --> Ready: month ok and a branch ticked
+  Invalid --> Ready: input fixed
+  Ready --> Invalid: input changed
+  Ready --> Loading: generate
+  Loading --> Loaded: succeeded
+  Loading --> Failed: failed
+  Loading --> Ready: cancelled
+  Loaded --> Loading: generate again
+  Failed --> Loading: generate again
+</pre>
+
+                        <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint3" role="button"><i
+                                    class="bi bi-lightbulb"></i> Show hints</a></p>
+                        <div class="collapse" id="hint3">
+                            <div class="card card-body bg-body-tertiary small">
+                                <ul class="mb-0">
+                                    <li><code>Bindings.createStringBinding(callable, dependencies…)</code> recomputes
+                                        only if every observable it reads is listed as a dependency. A missing
+                                        dependency gives a message that never updates.</li>
+                                    <li><code>StringExpression.isEmpty()</code> returns a <code>BooleanBinding</code>,
+                                        so <code>valid</code> needs no lambda.</li>
+                                    <li>Editable combo boxes commit typed text on Enter or focus loss; the converter
+                                        returns <code>null</code> for garbage, which becomes "Choose a month.".</li>
+                                    <li>Do not open an <code>Alert</code> from the ViewModel: an error is state that the
+                                        view presents.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+                        <div class="check-list" data-task="t3">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t3a"><label
+                                    class="form-check-label" for="t3a">The five rows of the table behave exactly as
+                                    shown (messages letter for letter).</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t3b"><label
+                                    class="form-check-label" for="t3b">The month rule uses the injected
+                                    <code>Clock</code>; no <code>YearMonth.now()</code> without argument in
+                                    <code>ui</code>.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t3c"><label
+                                    class="form-check-label" for="t3c">A forced load error shows the file message and
+                                    keeps the previous table content.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t3d"><label
+                                    class="form-check-label" for="t3d">The state diagram with property values per state
+                                    is in <code>lab03/viewmodel-design.md</code>.</label></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== TASK 4 ===================== -->
+                <section class="task card mb-4" id="task4">
+                    <div class="card-header task-header">
+                        <span class="task-number text-bg-primary">4</span>
+                        <h2 class="h4 mb-0">Background loading with a <code>Task</code>: progress, cancel, no freeze
+                        </h2>
+                        <span class="badge text-bg-danger">Hard</span>
+                        <span class="badge text-bg-light ms-auto">90 min</span>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+                        <p>Load branch summaries in a <code>javafx.concurrent.Task</code> behind the
+                            <code>BackgroundJobs</code> port, with progress bound to the <code>ProgressBar</code> and a
+                            working <em>Cancel</em>, and show with measurements that the UI stays responsive while the
+                            load time stays about the same.</p>
+
+                        <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+                        <ol class="step-list">
+                            <li>Complete <code>FxBackgroundJobs</code>: forward <code>progressProperty()</code> to
+                                <code>listener.progress</code>, and
+                                <code>setOnSucceeded</code>/<code>setOnFailed</code>/<code>setOnCancelled</code> to the
+                                listener; <code>update(done, total)</code> calls <code>updateProgress</code>.</li>
+                            <li>In <code>loadAll</code> (runs on the worker) use only the snapshot arguments and the
+                                source; check <code>sink.isCancelled()</code> before each branch (throw
+                                <code>CancellationException</code>) and call <code>sink.update(i + 1, n)</code> after
+                                each branch. In the listener, <code>cancelled()</code> resets <code>loading</code> and
+                                sets "Cancelled, previous data kept.".</li>
+                            <li>Switch <code>ReportViewerApp</code> to
+                                <code>new FxBackgroundJobs(Executors.newVirtualThreadPerTaskExecutor())</code> and shut
+                                the executor down in <code>Application.stop()</code>.</li>
+                            <li>Generate the measurement data: <code>mvn -q compile</code> then
+                                <code>java -cp target/classes edu.itc.salesreport.ingest.SalesDataGenerator 2026-08 5000 42 data</code>
+                                (93 files, 465,000 rows; use your Lab-02 generator if you have one).</li>
+                            <li>Measure with <code>LoadBenchmarkApp</code> (copy it and <code>FrameGapMonitor</code> as
+                                given): 2 warm-up and 5 measured runs per mode, <code>CallerThreadJobs</code> versus
+                                <code>FxBackgroundJobs</code>. Record every run, the mean load time and the worst frame
+                                gap in <code>lab03/measurements.md</code>, with CPU, RAM, OS, JDK and JavaFX versions.
+                            </li>
+                            <li>Observe responsiveness by hand with 20,000 rows per day (regenerate into another
+                                folder): during a load, type in the product filter, move the window and press
+                                <em>Cancel</em>. Write 3 to 5 sentences in <code>measurements.md</code> comparing both
+                                modes.</li>
+                        </ol>
+
+                        <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+                        <pre><code class="language-java">package edu.itc.salesreport.ui;
+
+import java.util.Objects;
+import java.util.concurrent.Executor;
+import javafx.concurrent.Task;
+
+/** Task 4 skeleton: one javafx.concurrent.Task per job. */
+public final class FxBackgroundJobs implements BackgroundJobs {
+
+    private final Executor executor;
+
+    public FxBackgroundJobs(Executor executor) {
+        this.executor = Objects.requireNonNull(executor);
+    }
+
+    @Override
+    public &lt;T&gt; JobHandle submit(Work&lt;T&gt; work, JobListener&lt;T&gt; listener) {
+        FxTask&lt;T&gt; task = new FxTask&lt;&gt;(work);
+        // TODO forward task.progressProperty() to listener.progress(...)
+        // TODO setOnSucceeded / setOnFailed / setOnCancelled -&gt; listener
+        executor.execute(task);
+        return () -&gt; task.cancel(true);
+    }
+
+    private static final class FxTask&lt;T&gt; extends Task&lt;T&gt;
+            implements ProgressSink {
+        private final Work&lt;T&gt; work;
+
+        FxTask(Work&lt;T&gt; work) {
+            this.work = work;
+        }
+
+        @Override
+        protected T call() throws Exception {
+            return work.run(this);
+        }
+
+        @Override
+        public void update(long done, long total) {
+            // TODO publish progress (thread-safe, coalesced by Task)
+        }
+    }
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+import javafx.animation.AnimationTimer;
+
+/**
+ * Measures UI responsiveness: the longest gap between two pulses of the
+ * FX Application Thread (about 16.7 ms at 60 Hz when the UI is idle).
+ */
+public final class FrameGapMonitor extends AnimationTimer {
+
+    private long last;
+    private long maxGapNanos;
+    private long frames;
+
+    @Override
+    public void handle(long now) {
+        if (last != 0) {
+            maxGapNanos = Math.max(maxGapNanos, now - last);
+        }
+        last = now;
+        frames++;
+    }
+
+    public void reset() {
+        last = 0;
+        maxGapNanos = 0;
+        frames = 0;
+    }
+
+    public double maxGapMillis() {
+        return maxGapNanos / 1_000_000.0;
+    }
+
+    public long frames() {
+        return frames;
+    }
+}</code></pre>
+                        <p class="mt-2 mb-1"><a class="hint-btn" data-bs-toggle="collapse" href="#benchApp"
+                                role="button"><i class="bi bi-code-slash"></i> Measurement harness
+                                <code>LoadBenchmarkApp</code> (copy as is)</a></p>
+                        <div class="collapse" id="benchApp">
+                            <pre><code class="language-java">package edu.itc.salesreport.ui;
+
+import edu.itc.salesreport.engine.SimpleReportEngine;
+import java.nio.file.Path;
+import java.time.Clock;
+import java.time.YearMonth;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javafx.animation.PauseTransition;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+import javafx.util.Duration;
+
+/**
+ * Lab-03 Task 4: load time and UI responsiveness, caller thread
+ * (frozen UI) versus FxBackgroundJobs (Task on a worker thread).
+ * Arguments: --data=data --month=2026-08 --warmup=2 --runs=5
+ */
+public class LoadBenchmarkApp extends Application {
+
+    private record Result(String mode, double loadMs, double maxGapMs) { }
+
+    private final FrameGapMonitor monitor = new FrameGapMonitor();
+    private final List&lt;Result&gt; results = new ArrayList&lt;&gt;();
+    private final Deque&lt;Runnable&gt; plan = new ArrayDeque&lt;&gt;();
+    private ExecutorService workers;
+    private Stage stage;
+
+    @Override
+    public void start(Stage stage) {
+        this.stage = stage;
+        Map&lt;String, String&gt; args = getParameters().getNamed();
+        Path dataDir = Path.of(args.getOrDefault("data", "data"));
+        YearMonth month = YearMonth.parse(args.getOrDefault("month",
+                "2026-08"));
+        int warmup = Integer.parseInt(args.getOrDefault("warmup", "2"));
+        int runs = Integer.parseInt(args.getOrDefault("runs", "5"));
+        var engine = new SimpleReportEngine();
+        SummarySource source =
+                (m, b) -&gt; engine.summarizeBranch(m, b, dataDir);
+        workers = Executors.newVirtualThreadPerTaskExecutor();
+
+        for (String mode : List.of("caller-thread", "fx-task")) {
+            for (int i = 0; i &lt; warmup + runs; i++) {
+                boolean measured = i &gt;= warmup;
+                plan.add(() -&gt; runOnce(mode, measured, source, month));
+            }
+        }
+        plan.add(this::printAndExit);
+
+        stage.setScene(new Scene(new StackPane(), 960, 600));
+        stage.show();
+        monitor.start();
+        plan.poll().run();
+    }
+
+    private void runOnce(String mode, boolean measured, SummarySource src,
+            YearMonth month) {
+        BackgroundJobs jobs = mode.equals("caller-thread")
+                ? new CallerThreadJobs() : new FxBackgroundJobs(workers);
+        var vm = new ReportViewModel(src, jobs, Clock.systemDefaultZone());
+        vm.monthProperty().set(month);
+        stage.getScene().setRoot(new ReportView(vm).root());
+
+        long t0 = System.nanoTime();
+        monitor.reset();
+        vm.loadingProperty().addListener(new ChangeListener&lt;&gt;() {
+            @Override
+            public void changed(javafx.beans.value.ObservableValue&lt;?
+                    extends Boolean&gt; obs, Boolean was, Boolean now) {
+                if (now) return;
+                obs.removeListener(this);
+                double loadMs = (System.nanoTime() - t0) / 1e6;
+                // let a few pulses pass so a blocked frame is measured
+                PauseTransition settle = new PauseTransition(
+                        Duration.millis(250));
+                settle.setOnFinished(e -&gt; {
+                    if (measured) {
+                        results.add(new Result(mode, loadMs,
+                                monitor.maxGapMillis()));
+                    }
+                    plan.poll().run();
+                });
+                settle.play();
+            }
+        });
+        vm.generateCommand().execute();
+    }
+
+    private void printAndExit() {
+        System.out.println("mode           run  load ms  max frame gap ms");
+        int[] n = new int[1];
+        String prev = "";
+        for (Result r : results) {
+            n[0] = r.mode().equals(prev) ? n[0] + 1 : 1;
+            prev = r.mode();
+            System.out.println(String.format(Locale.ROOT,
+                    "%-13s %4d %8.0f %17.0f",
+                    r.mode(), n[0], r.loadMs(), r.maxGapMs()));
+        }
+        for (String mode : List.of("caller-thread", "fx-task")) {
+            var rs = results.stream().filter(r -&gt; r.mode().equals(mode))
+                    .toList();
+            System.out.println(String.format(Locale.ROOT,
+                    "%-13s mean load %6.0f ms, worst frame gap %6.0f ms",
+                    mode,
+                    rs.stream().mapToDouble(Result::loadMs).average()
+                            .orElse(0),
+                    rs.stream().mapToDouble(Result::maxGapMs).max()
+                            .orElse(0)));
+        }
+        monitor.stop();
+        workers.shutdownNow();
+        Platform.exit();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}</code></pre>
+                        </div>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+                        <pre><code class="language-plaintext">$ mvn -q javafx:run -Dapp.main=edu.itc.salesreport.ui.LoadBenchmarkApp \
+      "-Djavafx.args=--data=data --month=2026-08"
+mode           run  load ms  max frame gap ms
+caller-thread    1      480               586
+caller-thread    2      458               554
+caller-thread    3      497               545
+caller-thread    4      372               431
+caller-thread    5      382               415
+fx-task          1      435                23
+fx-task          2      444                27
+fx-task          3      385                18
+fx-task          4      342                17
+fx-task          5      328                17
+caller-thread mean load    438 ms, worst frame gap    586 ms
+fx-task       mean load    387 ms, worst frame gap     27 ms</code></pre>
+                        <p class="small text-secondary">Reference run: Intel i7-13700F, 32 GB, Windows 11, JDK 25.0.3,
+                            JavaFX 25.0.4. Your numbers differ; the shape must not: similar load times, but a worst
+                            frame gap of hundreds of milliseconds on the caller thread against a few frames (well under
+                            100 ms) with the <code>Task</code>. Run-to-run spread of ±30 % is normal on a busy laptop,
+                            which is why you report every run.</p>
+
+                        <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint4" role="button"><i
+                                    class="bi bi-lightbulb"></i> Show hints</a></p>
+                        <div class="collapse" id="hint4">
+                            <div class="card card-body bg-body-tertiary small">
+                                <ul class="mb-0">
+                                    <li><code>Task</code> handlers (<code>setOnSucceeded</code> …) and property
+                                        listeners on a <code>Task</code> run on the FX Application Thread, so the
+                                        ViewModel may set its properties inside them.</li>
+                                    <li><code>updateProgress</code> is safe to call thousands of times from the worker:
+                                        <code>Task</code> coalesces updates into at most one pending
+                                        <code>runLater</code>.</li>
+                                    <li>A worker that reads <code>month.get()</code> races with the user changing the
+                                        combo box. Pass the <code>YearMonth</code> and <code>List.copyOf(...)</code>
+                                        captured in <code>generate()</code>.</li>
+                                    <li>Frame gap is the time between two <code>AnimationTimer</code> pulses: about 16.7
+                                        ms at 60 Hz when idle. A load on the FX thread shows up as one huge gap.</li>
+                                    <li><code>task.cancel(true)</code> interrupts the worker; a blocking file read may
+                                        still finish, but a cancelled task never reaches SUCCEEDED, so late results are
+                                        discarded.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+                        <div class="check-list" data-task="t4">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t4a"><label
+                                    class="form-check-label" for="t4a">The progress bar advances per branch and
+                                    <em>Cancel</em> stops a running load, keeping the previous data.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t4b"><label
+                                    class="form-check-label" for="t4b">No ViewModel property is written from the worker;
+                                    the worker receives only immutable snapshots.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t4c"><label
+                                    class="form-check-label" for="t4c"><code>lab03/measurements.md</code> has all 10
+                                    measured runs, means, worst gaps, method and hardware.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t4d"><label
+                                    class="form-check-label" for="t4d">With <code>FxBackgroundJobs</code> the worst
+                                    frame gap stays below 100 ms, and the manual observation is written down.</label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== TASK 5 ===================== -->
+                <section class="task card mb-4" id="task5">
+                    <div class="card-header task-header">
+                        <span class="task-number text-bg-primary">5</span>
+                        <h2 class="h4 mb-0">Unit-test the ViewModel, compare MVC and MVVM</h2>
+                        <span class="badge text-bg-danger">Hard</span>
+                        <span class="badge text-bg-light ms-auto">90 min</span>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="h6 text-uppercase text-secondary">Goal</h3>
+                        <p>Prove the ViewModel's behaviour with at least eight JUnit 6 tests that never start JavaFX,
+                            guard the "no UI types" rule with a test, compare your Lab-02 MVC viewer and your Lab-03
+                            MVVM viewer with numbers, and record what changed.</p>
+
+                        <h3 class="h6 text-uppercase text-secondary">Steps</h3>
+                        <ol class="step-list">
+                            <li>Add the test double <code>ManualJobs</code> (given): jobs wait in a queue until the test
+                                calls <code>runNext()</code>, so the loading state is observable in between, without
+                                threads or sleeps.</li>
+                            <li>Write <code>ReportViewModelTest</code> with a fixed <code>Clock</code> (2026-09-27,
+                                Asia/Phnom_Penh) and a fake <code>SummarySource</code>: at least 8 tests covering
+                                validation (3), command enablement (2), success with totals, progress, failure,
+                                cancellation and the product filter.</li>
+                            <li>Add <code>ViewModelImportsTest</code> (given): it fails when
+                                <code>ReportViewModel.java</code> imports <code>javafx.scene</code>,
+                                <code>javafx.stage</code>, <code>javafx.application</code> or
+                                <code>javafx.concurrent</code>.</li>
+                            <li>Run <code>mvn verify</code> and read the <code>ReportViewModel</code> row of
+                                <code>target/site/jacoco/jacoco.csv</code> (line coverage = LINE_COVERED / (LINE_COVERED
+                                + LINE_MISSED)). Target: at least 85 %.</li>
+                            <li>Write <code>lab03/mvc-vs-mvvm.md</code> from <em>your own</em> code: lines of
+                                presentation code (<code>wc -l</code> per class), presentation-logic line coverage
+                                without toolkit, number of <code>javafx.scene</code> imports and of control types
+                                referenced by the logic class, test run time; end with 5 to 8 sentences: what got
+                                better, what got worse (more classes, binding debugging), when you would still choose
+                                MVC.</li>
+                            <li><strong>Record what changed</strong>: create <code>lab03/README.md</code> with (a) a
+                                table of this lab's files (path, purpose, author), (b) the inputs reused from Lab-02
+                                with their commit or tag (<code>lab-02-final</code>) or "fallback starter A/B", (c) a
+                                change-log row: date, what changed, who, and whether the model package changed (it
+                                should not).</li>
+                        </ol>
+
+                        <h3 class="h6 text-uppercase text-secondary">Starter code</h3>
+                        <pre><code class="language-java">package edu.itc.salesreport.ui;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+/** Test double: jobs wait until the test runs them, on the test thread. */
+final class ManualJobs implements BackgroundJobs {
+
+    private final Deque&lt;Pending&lt;?&gt;&gt; pending = new ArrayDeque&lt;&gt;();
+
+    @Override
+    public &lt;T&gt; JobHandle submit(Work&lt;T&gt; work, JobListener&lt;T&gt; listener) {
+        Pending&lt;T&gt; job = new Pending&lt;&gt;(work, listener);
+        pending.add(job);
+        return () -&gt; {
+            if (pending.remove(job)) {
+                job.cancelled = true;
+                listener.cancelled();
+            }
+        };
+    }
+
+    int pendingCount() {
+        return pending.size();
+    }
+
+    /** Runs the oldest job to completion, as a worker thread would. */
+    void runNext() {
+        pending.remove().run();
+    }
+
+    private static final class Pending&lt;T&gt; implements ProgressSink {
+        private final Work&lt;T&gt; work;
+        private final JobListener&lt;T&gt; listener;
+        private boolean cancelled;
+
+        Pending(Work&lt;T&gt; work, JobListener&lt;T&gt; listener) {
+            this.work = work;
+            this.listener = listener;
+        }
+
+        void run() {
+            T value;
+            try {
+                value = work.run(this);
+            } catch (Exception e) {
+                listener.failed(e);
+                return;
+            }
+            listener.succeeded(value);
+        }
+
+        @Override
+        public void update(long done, long total) {
+            listener.progress((double) done / total);
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return cancelled;
+        }
+    }
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import edu.itc.salesreport.model.BranchSummary;
+import edu.itc.salesreport.model.ProductTotal;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+/** Plain JUnit: no JavaFX toolkit, no window, no robot, no sleep. */
+class ReportViewModelTest {
+
+    static final Clock SEP_27 = Clock.fixed(
+            Instant.parse("2026-09-27T03:00:00Z"),
+            ZoneId.of("Asia/Phnom_Penh"));
+    static final YearMonth AUG = YearMonth.of(2026, 8);
+
+    ManualJobs jobs = new ManualJobs();
+    List&lt;String&gt; loaded = new ArrayList&lt;&gt;();
+    boolean failNext;
+    ReportViewModel vm;
+
+    @BeforeEach
+    void setUp() {
+        SummarySource source = (month, branch) -&gt; {
+            if (failNext) {
+                throw new IOException(branch + "-2026-08-03.csv: unreadable");
+            }
+            loaded.add(branch);
+            return summary(branch, "200.00");
+        };
+        vm = new ReportViewModel(source, jobs, SEP_27);
+    }
+
+    static BranchSummary summary(String branch, String revenue) {
+        var rice = new ProductTotal("SKU-1001", "Jasmine Rice 5kg",
+                new BigDecimal(revenue), 5);
+        return new BranchSummary(branch, new BigDecimal(revenue),
+                BigDecimal.ZERO, 10, Map.of(), List.of(rice), Map.of());
+    }
+
+    @Test
+    void futureMonthIsRejected() {
+        vm.monthProperty().set(YearMonth.of(2026, 10));
+        assertEquals("Month 2026-10 is in the future.",
+                vm.monthErrorProperty().get());
+        assertFalse(vm.generateCommand().isExecutable());
+    }
+
+    @Test
+    void generateStartsLoadingAndDisablesItself() {
+        vm.monthProperty().set(AUG);
+        vm.generateCommand().execute();
+        assertTrue(vm.loadingProperty().get());
+        assertFalse(vm.generateCommand().isExecutable());
+        assertTrue(vm.cancelCommand().isExecutable());
+        assertEquals(1, jobs.pendingCount());
+    }
+
+    // TODO at least 6 more, for example:
+    // cannotGenerateBeforeAMonthIsChosen, emptyBranchSelectionIsRejected,
+    // generateIsIgnoredWhileInvalid, successfulLoadFillsSummariesAndTotal,
+    // progressFollowsTheBranches, failureKeepsPreviousDataAndShowsTheError,
+    // cancelReenablesGenerateAndKeepsOldData, productFilterIsCaseInsensitive,
+    // workerUsesASnapshotOfTheInputs
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+/** Architecture guard: the ViewModel may use javafx.base only. */
+class ViewModelImportsTest {
+
+    private static final List&lt;String&gt; FORBIDDEN = List.of(
+            "import javafx.scene", "import javafx.stage",
+            "import javafx.application", "import javafx.concurrent");
+
+    @Test
+    void viewModelUsesJavafxBaseOnly() throws IOException {
+        Path src = Path.of("src/main/java/edu/itc/salesreport/ui",
+                "ReportViewModel.java");
+        List&lt;String&gt; bad = Files.readAllLines(src).stream()
+                .filter(line -&gt; FORBIDDEN.stream().anyMatch(line::startsWith))
+                .toList();
+        assertEquals(List.of(), bad);
+    }
+}</code></pre>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+                        <pre><code class="language-plaintext">$ mvn verify
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.220 s
+       -- in edu.itc.salesreport.ui.ReportViewModelTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s
+       -- in edu.itc.salesreport.ui.ViewModelImportsTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+
+$ grep ReportViewModel, target/site/jacoco/jacoco.csv
+sales-report,edu.itc.salesreport.ui,ReportViewModel,19,635,4,26,5,118,8,49,4,38
+                    (LINE_MISSED 5, LINE_COVERED 118: 96 % line coverage)</code></pre>
+                        <p class="small mb-1">Example of <code>lab03/mvc-vs-mvvm.md</code> (reference solution with
+                            fallback starter B as the MVC side):</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered small">
+                                <thead class="table-active">
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th>MVC (Lab-02, <code>ReportController</code>)</th>
+                                        <th>MVVM (Lab-03)</th>
+                                        <th>How measured</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Lines of presentation code</td>
+                                        <td>43 (controller) in a 107-line app</td>
+                                        <td>293 ViewModel + 133 view + 138 ports, commands and jobs</td>
+                                        <td><code>wc -l</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Presentation-logic line coverage without toolkit</td>
+                                        <td>0 % (<code>new ComboBox&lt;&gt;()</code> needs the toolkit)</td>
+                                        <td>96 % (118 of 123 lines)</td>
+                                        <td>JaCoCo 0.8.15</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>javafx.scene</code> imports in the logic class</td>
+                                        <td>9</td>
+                                        <td>0</td>
+                                        <td><code>grep -c "^import javafx.scene"</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Control types the logic class references</td>
+                                        <td>4 (ComboBox, CheckBox, Label, TableView)</td>
+                                        <td>0</td>
+                                        <td>code review</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Test run time of presentation logic</td>
+                                        <td>n/a</td>
+                                        <td>0.08 to 0.22 s for 12 tests</td>
+                                        <td>Surefire report</td>
+                                    </tr>
+                                    <tr>
+                                        <td>UI frozen during a load</td>
+                                        <td>yes (worst gap 586 ms)</td>
+                                        <td>no (27 ms)</td>
+                                        <td>Task 4</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hint5" role="button"><i
+                                    class="bi bi-lightbulb"></i> Show hints</a></p>
+                        <div class="collapse" id="hint5">
+                            <div class="card card-body bg-body-tertiary small">
+                                <ul class="mb-0">
+                                    <li>Record progress values with a listener on <code>vm.progressProperty()</code> and
+                                        assert the list: with two branches you should see <code>[0.5, 1.0]</code>.</li>
+                                    <li>To test failure, let the fake source throw on a flag and run a second load after
+                                        a successful one; assert that <code>summaries()</code> still has the old rows.
+                                    </li>
+                                    <li>If a test needs <code>Platform</code> or a <code>Task</code>, the ViewModel
+                                        still depends on the toolkit: fix the ViewModel, not the test.</li>
+                                    <li>Never compare against the real date:
+                                        <code>Clock.fixed(Instant.parse("2026-09-27T03:00:00Z"), ZoneId.of("Asia/Phnom_Penh"))</code>.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+                        <div class="check-list" data-task="t5">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t5a"><label
+                                    class="form-check-label" for="t5a">At least 8 <code>ReportViewModelTest</code> tests
+                                    pass without starting JavaFX, without <code>Thread.sleep</code>, with a fixed
+                                    <code>Clock</code>.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t5b"><label
+                                    class="form-check-label" for="t5b"><code>ViewModelImportsTest</code> passes and
+                                    <code>mvn -q verify</code> is green; <code>ReportViewModel</code> line coverage is
+                                    at least 85 %.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t5c"><label
+                                    class="form-check-label" for="t5c"><code>lab03/mvc-vs-mvvm.md</code> compares both
+                                    versions of your own code with the metrics above and a written conclusion.</label>
+                            </div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="t5d"><label
+                                    class="form-check-label" for="t5d"><code>lab03/README.md</code> records files,
+                                    reused inputs (tag or fallback) and the change log.</label></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== CHALLENGE ===================== -->
+                <section class="task card mb-4 border-warning" id="challenge">
+                    <div class="card-header task-header bg-warning-subtle">
+                        <span class="task-number text-bg-warning"><i class="bi bi-star-fill"></i></span>
+                        <h2 class="h4 mb-0">Challenge: a second view on the same ViewModel</h2>
+                        <span class="badge text-bg-danger">Hard</span>
+                        <span class="badge text-bg-light ms-auto">90–120 min · optional, extra credit</span>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="h6 text-uppercase text-secondary">Scenario</h3>
+                        <p>The Angkor Mart operations manager wants a small always-on-top dashboard next to the full
+                            viewer: the month, the chain revenue in large type, how many branches are loaded, a spinner
+                            while loading and a <em>Refresh</em> button. Both windows must always agree, and head office
+                            asks whether the same design would carry over to their planned Android app or to the finance
+                            team's WPF tools.</p>
+                        <h3 class="h6 text-uppercase text-secondary">Requirements</h3>
+                        <ol class="step-list">
+                            <li>Write <code>DashboardView</code> bound to the <strong>same</strong>
+                                <code>ReportViewModel</code> instance, opened in a second <code>Stage</code> by
+                                <code>DashboardWindow.open(vm)</code> from <code>ReportViewerApp</code>.</li>
+                            <li>Prove reuse:
+                                <code>git diff lab-03-task5 -- src/main/java/edu/itc/salesreport/ui/ReportViewModel.java</code>
+                                is empty (tag your Task 5 commit first). If you had to change the ViewModel, explain why
+                                in the README.</li>
+                            <li>Demonstrate: changing the month in the viewer updates the dashboard; <em>Refresh</em> in
+                                the dashboard fills the viewer's table; both buttons are disabled during a load. Save
+                                <code>lab03/screenshots/dashboard.png</code> with both windows.</li>
+                            <li>Add one ViewModel test that simulates two views: two listeners on
+                                <code>totalRevenueTextProperty()</code> both receive "USD 600.00" after one load.</li>
+                            <li>Write <code>lab03/platform-mapping.md</code>: a table mapping each
+                                <code>ReportViewModel</code> member (month, branch flags, summaries, loading, progress,
+                                validation, generate, cancel, BackgroundJobs) to Android Jetpack
+                                (<code>ViewModel</code>, <code>StateFlow</code>, <code>viewModelScope</code>)
+                                <em>or</em> WPF (<code>INotifyPropertyChanged</code>, <code>ObservableCollection</code>,
+                                <code>ICommand</code>, <code>async</code>/<code>await</code>), and 5 sentences on what
+                                would not carry over (two-way binding in Jetpack, lifetime across rotation).</li>
+                        </ol>
+                        <h3 class="h6 text-uppercase text-secondary">Skeleton</h3>
+                        <pre><code class="language-java">package edu.itc.salesreport.ui;
+
+import javafx.beans.binding.Bindings;
+import javafx.geometry.Insets;
+import javafx.scene.Parent;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.layout.VBox;
+
+/** Challenge skeleton: a compact dashboard bound to the SAME ViewModel. */
+public final class DashboardView {
+
+    private final VBox root = new VBox(8);
+
+    public DashboardView(ReportViewModel vm) {
+        Label month = new Label();
+        month.textProperty().bind(Bindings.createStringBinding(
+                () -&gt; "Month: " + vm.monthProperty().get(),
+                vm.monthProperty()));
+        Label total = new Label();
+        total.setStyle("-fx-font-size: 28px; -fx-font-weight: bold;");
+        total.textProperty().bind(vm.totalRevenueTextProperty());
+        Label branches = new Label();
+        // TODO "3 branch(es) loaded": Bindings.size(vm.summaries())
+        ProgressIndicator spinner = new ProgressIndicator();
+        // TODO bind spinner progress and visibility to the ViewModel
+        Button refresh = new Button("Refresh");
+        // TODO execute vm.generateCommand(), disable when not executable
+        root.getChildren().addAll(month, total, branches, spinner, refresh);
+        root.setPadding(new Insets(12));
+    }
+
+    public Parent root() {
+        return root;
+    }
+}</code></pre>
+                        <pre class="mt-2"><code class="language-java">package edu.itc.salesreport.ui;
+
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
+/** Challenge wiring: a second window bound to the same ViewModel. */
+final class DashboardWindow {
+
+    static Stage open(ReportViewModel vm) {
+        Stage dash = new Stage();
+        dash.setScene(new Scene(new DashboardView(vm).root(), 320, 260));
+        dash.setTitle("Angkor Mart · Dashboard");
+        dash.show();
+        return dash;
+    }
+
+    private DashboardWindow() { }
+}</code></pre>
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Expected output</h3>
+                        <pre><code class="language-plaintext">Viewer window                         Dashboard window
+  Month 2026-08, PNH REP BTB ticked     Month: 2026-08
+  [Generate] clicked                    spinner visible, Refresh disabled
+  table: 3 rows                         "3 branch(es) loaded"
+  Chain revenue: USD …                  USD …   (same text)
+
+$ git diff lab-03-task5 -- src/main/java/edu/itc/salesreport/ui/ReportViewModel.java
+$                                     (no output: ViewModel reused unchanged)</code></pre>
+                        <p class="mt-3"><a class="hint-btn" data-bs-toggle="collapse" href="#hintC" role="button"><i
+                                    class="bi bi-lightbulb"></i> Show hints</a></p>
+                        <div class="collapse" id="hintC">
+                            <div class="card card-body bg-body-tertiary small">
+                                <ul class="mb-0">
+                                    <li><code>Bindings.size(vm.summaries()).asString("%d branch(es) loaded")</code>
+                                        gives a ready-made <code>StringBinding</code>.</li>
+                                    <li>Both views must bind to the ViewModel, never to each other's controls.</li>
+                                    <li>Call <code>dash.setAlwaysOnTop(true)</code> for the manager's request; closing
+                                        the dashboard must not stop the application
+                                        (<code>Platform.setImplicitExit</code> stays default, the main window owns the
+                                        lifecycle).</li>
+                                    <li>For the mapping: Jetpack has no two-way binding; inputs become events such as
+                                        <code>onMonthSelected(YearMonth)</code> and the state is one immutable
+                                        <code>ReportState</code> in a <code>StateFlow</code>.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <h3 class="h6 text-uppercase text-secondary mt-3">Acceptance checklist</h3>
+                        <div class="check-list" data-task="tc">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="tca"><label
+                                    class="form-check-label" for="tca">The dashboard and the viewer share one
+                                    <code>ReportViewModel</code> instance and always show the same month, total and
+                                    loading state.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="tcb"><label
+                                    class="form-check-label" for="tcb"><code>ReportViewModel.java</code> is unchanged
+                                    since Task 5 (or the change is justified in the README).</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="tcc"><label
+                                    class="form-check-label" for="tcc">The two-listener test passes;
+                                    <code>lab03/screenshots/dashboard.png</code> shows both windows.</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="tcd"><label
+                                    class="form-check-label" for="tcd"><code>lab03/platform-mapping.md</code> maps every
+                                    ViewModel member to Jetpack or WPF and names what does not carry over.</label></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== RUBRIC ===================== -->
+                <section class="task card mb-4" id="rubric">
+                    <div class="card-header">
+                        <h2 class="h4 mb-0"><i class="bi bi-clipboard-check"></i> Grading rubric</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle">
+                                <thead class="table-active">
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Points</th>
+                                        <th>Full marks when…</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Task 1 · ViewModel design</td>
+                                        <td>10</td>
+                                        <td>Complete controller inventory, read-only outputs, ports and commands,
+                                            rendered class diagram.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Task 2 · Bound view</td>
+                                        <td>15</td>
+                                        <td>View has only controls and bindings, commands wired, model unchanged, same
+                                            revenues as Lab-02.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Task 3 · Validation and errors</td>
+                                        <td>20</td>
+                                        <td>All five input cases correct via injected <code>Clock</code>, load errors
+                                            kept as state, state diagram documented.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Task 4 · Background loading</td>
+                                        <td>20</td>
+                                        <td><code>Task</code> behind the port, progress and cancel work, 10 measured
+                                            runs with method and hardware, frame gap below 100 ms.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Task 5 · Tests and comparison</td>
+                                        <td>25</td>
+                                        <td>At least 8 toolkit-free tests, import guard, coverage at least 85 %, MVC vs
+                                            MVVM comparison with own numbers, README.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Code and diagram quality, Git history</td>
+                                        <td>10</td>
+                                        <td>Small focused classes, clear names, diagrams render, both members author
+                                            meaningful commits.</td>
+                                    </tr>
+                                    <tr class="table-warning">
+                                        <td>★ Challenge (extra credit)</td>
+                                        <td>+20</td>
+                                        <td>Second view on the unchanged ViewModel, two-listener test, screenshot,
+                                            platform mapping.</td>
+                                    </tr>
+                                    <tr class="fw-semibold">
+                                        <td>Total</td>
+                                        <td>100 (+20)</td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="alert alert-danger small mb-0"><strong>Automatic deductions:</strong>
+                            −10 if <code>ReportViewModel</code> (or any <code>*ViewModel</code> class) imports
+                            <code>javafx.scene</code>, <code>javafx.stage</code>, <code>javafx.application</code> or
+                            <code>javafx.concurrent</code>;
+                            −10 if the UI freezes during the demo or the measured worst frame gap with
+                            <code>FxBackgroundJobs</code> exceeds 100 ms;
+                            −5 per ViewModel property written from a worker thread;
+                            −5 if a ViewModel test starts the JavaFX toolkit, calls <code>Thread.sleep</code> or depends
+                            on the real date;
+                            −5 if the model package differs from <code>lab-02-final</code> without an explanation in
+                            <code>lab03/README.md</code>;
+                            −5 if a measurement is reported as a single run.</div>
+                    </div>
+                </section>
+
+                <!-- ===================== SUBMISSION ===================== -->
+                <section class="task card mb-5" id="submission">
+                    <div class="card-header">
+                        <h2 class="h4 mb-0"><i class="bi bi-cloud-upload"></i> Submission</h2>
+                    </div>
+                    <div class="card-body">
+                        <ol class="step-list">
+                            <li>Repository layout:
+                                <pre><code class="language-plaintext">sales-report/
+├── pom.xml
+├── data/                      (generated, not committed: add to .gitignore)
+├── src/main/java/edu/itc/salesreport/
+│   ├── model/                 (unchanged since lab-02-final)
+│   ├── ingest/  engine/
+│   └── ui/                    ReportViewModel, ReportView, commands, jobs
+├── src/test/java/edu/itc/salesreport/ui/
+│   ├── ManualJobs.java
+│   ├── ReportViewModelTest.java
+│   └── ViewModelImportsTest.java
+└── lab03/
+    ├── README.md
+    ├── viewmodel-design.md
+    ├── measurements.md
+    ├── mvc-vs-mvvm.md
+    ├── platform-mapping.md    (challenge)
+    └── screenshots/</code></pre>
+                            </li>
+                            <li>From a clean checkout this must pass: <code>mvn -q verify</code> (tests and JaCoCo
+                                report, no display needed).</li>
+                            <li>Branch <code>lab-03</code>, pull request titled <code>Lab-03 – &lt;team name&gt;</code>,
+                                both members as authors of commits; link the PR in <code>lab03/README.md</code>.</li>
+                        </ol>
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <a class="btn btn-outline-primary" href="Chapter-03.html"><i class="bi bi-easel"></i> Back
+                                to Chapter 03 slides</a>
+                            <a class="btn btn-outline-secondary" href="Chapter-03.html#25"><i
+                                    class="bi bi-patch-question"></i> Retake the chapter quiz</a>
+                            <a class="btn btn-outline-secondary" href="../02-ModelViewController/Lab-02.html"><i
+                                    class="bi bi-arrow-left-short"></i> Lab-02</a>
+                        </div>
+                    </div>
+                </section>
+
+
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/kotlin.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/protobuf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/dockerfile.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/groovy.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/scala.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            const KEY = 'sec-lab03-checklist';   // unique per lab
+
+            /* Theme (shared key with the chapter decks) */
+            const root = document.documentElement;
+            try { const saved = localStorage.getItem('se-theme') || localStorage.getItem('ch01-theme'); if (saved) root.setAttribute('data-bs-theme', saved); } catch (e) { }
+            function renderMermaid() {
+                if (!document.querySelector('.mermaid')) return;
+                const dark = root.getAttribute('data-bs-theme') === 'dark';
+                const run = () => { mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'loose' }); mermaid.run({ querySelector: '.mermaid' }); };
+                if (window.mermaid) { run(); return; }
+                const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js'; s.onload = run; document.head.appendChild(s);
+            }
+            document.querySelectorAll('.mermaid').forEach(m => { m.dataset.src = m.textContent; });
+            renderMermaid();
+            document.getElementById('btnTheme').addEventListener('click', () => {
+                const t = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-bs-theme', t);
+                try { localStorage.setItem('se-theme', t); localStorage.setItem('ch01-theme', t); } catch (e) { }
+                document.querySelectorAll('.mermaid').forEach(m => { m.removeAttribute('data-processed'); m.textContent = m.dataset.src; });
+                renderMermaid();
+            });
+
+            /* Highlight + copy buttons */
+            hljs.highlightAll();
+            document.querySelectorAll('pre > code').forEach(code => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-sm btn-secondary copy-btn';
+                btn.textContent = 'Copy';
+                btn.addEventListener('click', async () => {
+                    try { await navigator.clipboard.writeText(code.innerText); btn.textContent = 'Copied!'; }
+                    catch (e) { btn.textContent = 'Failed'; }
+                    setTimeout(() => btn.textContent = 'Copy', 1200);
+                });
+                code.parentElement.appendChild(btn);
+            });
+
+            /* Checklist persistence + progress */
+            const boxes = Array.from(document.querySelectorAll('.check-list input[type=checkbox]'));
+            let state = {};
+            try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+            boxes.forEach(b => { b.checked = !!state[b.id]; });
+            const bar = document.getElementById('progressBar'), txt = document.getElementById('progressText');
+            function updateProgress() {
+                const done = boxes.filter(b => b.checked).length;
+                bar.style.width = (done / boxes.length * 100) + '%';
+                txt.textContent = done + ' / ' + boxes.length;
+            }
+            boxes.forEach(b => b.addEventListener('change', () => {
+                state[b.id] = b.checked;
+                try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { }
+                updateProgress();
+            }));
+            document.getElementById('resetProgress').addEventListener('click', () => {
+                if (!confirm('Clear all ticked checklist items?')) return;
+                boxes.forEach(b => b.checked = false);
+                state = {};
+                try { localStorage.removeItem(KEY); } catch (e) { }
+                updateProgress();
+            });
+            updateProgress();
+
+            /* Sidebar scroll-spy */
+            const links = Array.from(document.querySelectorAll('#sideNav .nav-link'));
+            const sections = links.map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(en => {
+                    if (en.isIntersecting) links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + en.target.id));
+                });
+            }, { rootMargin: '-40% 0px -55% 0px' });
+            sections.forEach(s => observer.observe(s));
+        })();
+    </script>
+
+    <script data-gic="hidden-labs">
+        (function () {
+            var cfg = { "base": "/courses/software-engineering-concepts/", "folders": ["01-IntroductionToSoftwareEngineeringConcepts", "02-ModelViewController", "03-ModelViewViewModel", "04-MultithreadedDesignStructures", "05-ThreadCommunicationAndSynchronization", "06-Multitasking", "07-InterprocessCommunication", "08-CaseStudyMonthlySalesReport", "09-MicroservicesDesignPattern", "10-ScalingMicroservices", "11-BuildEngineering", "12-MultiLanguageIntegration", "13-DomainSpecificLanguages"], "open": ["/courses/software-engineering-concepts/01-IntroductionToSoftwareEngineeringConcepts/Lab-01.html", "/courses/software-engineering-concepts/02-ModelViewController/Lab-02.html", "/courses/software-engineering-concepts/03-ModelViewViewModel/Lab-03.html"], "hidden": ["/courses/software-engineering-concepts/04-MultithreadedDesignStructures/Lab-04.html", "/courses/software-engineering-concepts/05-ThreadCommunicationAndSynchronization/Lab-05.html", "/courses/software-engineering-concepts/06-Multitasking/Lab-06.html", "/courses/software-engineering-concepts/07-InterprocessCommunication/Lab-07.html", "/courses/software-engineering-concepts/08-CaseStudyMonthlySalesReport/Lab-08.html", "/courses/software-engineering-concepts/09-MicroservicesDesignPattern/Lab-09.html", "/courses/software-engineering-concepts/10-ScalingMicroservices/Lab-10.html", "/courses/software-engineering-concepts/11-BuildEngineering/Lab-11.html", "/courses/software-engineering-concepts/12-MultiLanguageIntegration/Lab-12.html", "/courses/software-engineering-concepts/13-DomainSpecificLanguages/Lab-13.html"] };
+            var LAB = /^(lab|labs|practical|exercises?|tp)(?:[-_ .]?\d+)?(?:[-_ .].*)?$/i;
+            var lower = function (s) { return String(s).toLowerCase(); };
+            var base = lower(cfg.base), folders = {}, openFolders = {}, hidden = {};
+            cfg.folders.forEach(function (f) { folders[lower(f)] = true; });
+            cfg.open.forEach(function (p) { openFolders[lower(p).substring(base.length).split('/')[0]] = true; });
+            cfg.hidden.forEach(function (p) { hidden[lower(p)] = true; });
+
+            function hiddenLab(href) {
+                var u;
+                try { u = new URL(href, location.href); } catch (e) { return false; }
+                if (u.origin !== location.origin) { return false; }
+                var p = u.pathname;
+                try { p = decodeURIComponent(p); } catch (e) { /* keep it encoded */ }
+                p = lower(p);
+                if (hidden[p]) { return true; }
+                if (p.indexOf(base) !== 0) { return false; }
+                var parts = p.substring(base.length).split('/');
+                return parts.length > 1 && folders[parts[0]] === true && !openFolders[parts[0]] && LAB.test(parts[1]);
+            }
+
+            function gone(el) {
+                el.style.setProperty('display', 'none', 'important');
+                el.setAttribute('aria-hidden', 'true');
+                el.setAttribute('data-lab-hidden', '');
+            }
+
+            function onlyHidden(el) {
+                for (var n = el.firstChild; n; n = n.nextSibling) {
+                    if (n.nodeType === 3 && n.textContent.trim() !== '') { return false; }
+                    if (n.nodeType === 1 && !n.hasAttribute('data-lab-hidden')) { return false; }
+                }
+                return true;
+            }
+
+            function hide(a) {
+                var parent = a.parentElement;
+                if (parent && parent.tagName === 'TD') {
+                    var span = document.createElement('span');
+                    span.textContent = a.textContent;
+                    span.setAttribute('data-lab-text', '');
+                    parent.replaceChild(span, a);
+                    return;
+                }
+                gone(a);
+                a.setAttribute('tabindex', '-1');
+                if (parent && parent !== document.body && onlyHidden(parent)
+                    && (parent.tagName === 'LI' || /(^|\s)(btn-group|btn-toolbar|d-flex|d-grid|d-inline-flex)(\s|$)/.test(parent.className))) {
+                    gone(parent);
+                }
+            }
+
+            function scan(node) {
+                if (!node || node.nodeType !== 1) { return; }
+                var links = node.tagName === 'A' ? [node] : node.querySelectorAll('a[href]');
+                for (var i = 0; i < links.length; i++) {
+                    var a = links[i];
+                    if (a.hasAttribute('href') && !a.hasAttribute('data-lab-hidden') && hiddenLab(a.getAttribute('href'))) {
+                        hide(a);
+                    }
+                }
+            }
+
+            scan(document.documentElement);
+            new MutationObserver(function (mutations) {
+                mutations.forEach(function (m) {
+                    if (m.type === 'attributes') { scan(m.target); } else { m.addedNodes.forEach(scan); }
+                });
+            }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['href'] });
+        })();
+    </script>
+
+    <style data-gic="lab-bar">
+        body {
+            padding-bottom: 5.5rem !important
+        }
+
+        @media (max-width:575.98px) {
+            body {
+                padding-bottom: 9rem !important
+            }
+        }
+
+        .gic-lab-bar {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1040;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .5rem 1rem;
+            margin: 0;
+            padding: .6rem 1rem;
+            background: #111827;
+            color: #f9fafb;
+            border-top: 3px solid #0d6efd;
+            font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Khmer", "Khmer OS", sans-serif;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, .3);
+            text-align: left
+        }
+
+        .gic-lab-bar__info {
+            flex: 1 1 16rem;
+            min-width: 0
+        }
+
+        .gic-lab-bar__title {
+            display: block;
+            font-weight: 600;
+            overflow-wrap: anywhere
+        }
+
+        .gic-lab-bar__meta {
+            display: block;
+            color: #d1d5db;
+            font-size: 13px
+        }
+
+        .gic-lab-bar__status {
+            display: inline-block;
+            margin-right: .5rem;
+            padding: .05rem .5rem;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600
+        }
+
+        .gic-lab-bar__btn {
+            display: inline-block;
+            padding: .45rem .9rem;
+            border-radius: .375rem;
+            background: #0b5ed7;
+            color: #fff !important;
+            font-weight: 600;
+            text-decoration: none !important;
+            white-space: nowrap
+        }
+
+        .gic-lab-bar__btn:hover {
+            background: #0a58ca
+        }
+
+        .gic-lab-bar__btn:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px
+        }
+
+        @media print {
+            .gic-lab-bar {
+                display: none
+            }
+
+            body {
+                padding-bottom: 0 !important
+            }
+        }
+    </style>
+    <aside class="gic-lab-bar" data-gic="lab-bar" data-role="student" lang="en" aria-label="Lab assignment">
+        <div class="gic-lab-bar__info"><span class="gic-lab-bar__title">Lab 03 · Model View ViewModel (MVVM) design
+                pattern</span><span class="gic-lab-bar__meta"><span class="gic-lab-bar__status"
+                    data-status="NOT_SUBMITTED" style="background:#e5e7eb;color:#111827">Not submitted</span>Deadline:
+                <time datetime="2026-11-12T23:59+07:00">Nov 12, 2026, 11:59 PM</time></span></div><a
+            class="gic-lab-bar__btn" href="/me/courses/labs/26">Submit your work</a>
+    </aside>
+</body>
+
+</html>
