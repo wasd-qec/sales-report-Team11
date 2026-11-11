@@ -25,3 +25,4 @@ class ViewModelImportsTest {
         assertEquals(List.of(), bad);
     }
 }
+

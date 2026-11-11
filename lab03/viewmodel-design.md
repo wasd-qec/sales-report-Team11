@@ -144,3 +144,4 @@ stateDiagram-v2
 | **Loading** | valid | 1+ ticked | `true` | `false` | `""` | `"Loading..."` / progress fraction |
 | **Loaded** | valid | 1+ ticked | `false` | `true` | `""` | `"Loaded N branch(es) for ..."` |
 | **Failed** | valid | 1+ ticked | `false` | `true` | `""` | `"Load failed, previous data kept."` |
+

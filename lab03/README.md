@@ -68,3 +68,4 @@ mvn javafx:run -Dapp.main=edu.itc.salesreport.ui.LoadBenchmarkApp -Djavafx.args=
 ```
 
 Pull Request: [Lab-03 – Team 11](https://github.com/itc-salesreport/sales-report-Team11/pull/3)
+

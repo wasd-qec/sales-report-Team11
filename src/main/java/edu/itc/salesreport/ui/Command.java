@@ -13,3 +13,4 @@ public interface Command {
         return executableProperty().get();
     }
 }
+

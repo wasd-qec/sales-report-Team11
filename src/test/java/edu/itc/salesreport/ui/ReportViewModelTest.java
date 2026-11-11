@@ -222,3 +222,4 @@ class ReportViewModelTest {
         assertEquals(List.of("USD 600.00"), view2Totals);
     }
 }
+

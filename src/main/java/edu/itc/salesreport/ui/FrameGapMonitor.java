@@ -35,3 +35,4 @@ public final class FrameGapMonitor extends AnimationTimer {
         return frames;
     }
 }
+

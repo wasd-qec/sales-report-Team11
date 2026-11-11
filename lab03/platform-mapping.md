@@ -26,3 +26,4 @@
 3. **Lifecycle and Configuration Survival**: Android `ViewModel` instances are scoped to Activity/Fragment lifecycles and automatically survive configuration changes such as device rotation or screen resizing, whereas JavaFX ViewModels remain in memory only as long as the parent application or stage references them.
 4. **Structured Concurrency**: In Android, coroutine cancellations propagate automatically when `viewModelScope` is cleared upon screen departure, avoiding orphaned background tasks without manual `JobHandle.cancel()` book-keeping.
 5. **Collection Mutations**: WPF uses `ObservableCollection<T>` which fires granular `CollectionChanged` events for UI updates similar to JavaFX, while Jetpack Compose recomposes UI subtrees whenever the reference to an immutable list within `StateFlow` is updated.
+

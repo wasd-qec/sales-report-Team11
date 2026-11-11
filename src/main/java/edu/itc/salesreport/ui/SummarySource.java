@@ -8,3 +8,4 @@ import java.time.YearMonth;
 public interface SummarySource {
     BranchSummary load(YearMonth month, String branch) throws Exception;
 }
+

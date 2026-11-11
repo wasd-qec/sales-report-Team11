@@ -104,3 +104,4 @@ public final class SimpleReportEngine {
                 receipts.size(), byCategory, top, byPayment);
     }
 }
+

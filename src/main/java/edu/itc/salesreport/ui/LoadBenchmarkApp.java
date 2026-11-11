@@ -128,3 +128,4 @@ public class LoadBenchmarkApp extends Application {
         launch(args);
     }
 }
+

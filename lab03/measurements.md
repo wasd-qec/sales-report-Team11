@@ -42,3 +42,4 @@ fx-task       mean load    352 ms, worst frame gap     47 ms
 ## 3. Manual Observations & Analysis
 
 When running under `CallerThreadJobs`, the entire JavaFX Application Thread is occupied by sequential disk I/O and transaction aggregation, resulting in a completely unresponsive interface. During the load window, mouse clicks are queued without feedback, window dragging stutters or shows OS "Not Responding" hints, and the Cancel button cannot be triggered. In contrast, `FxBackgroundJobs` delegates data processing to a background worker thread (`Executors.newVirtualThreadPerTaskExecutor()`) while coalescing progress notifications through JavaFX Task pulses. Even during intensive loads, the worst frame gap remains at 47 ms (well below the 100 ms threshold), allowing immediate window relocation, smooth real-time text input in the product search box, and instant task abortion upon clicking Cancel.
+
