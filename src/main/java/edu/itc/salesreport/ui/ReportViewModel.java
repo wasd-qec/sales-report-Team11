@@ -3,12 +3,20 @@ package edu.itc.salesreport.ui;
 import edu.itc.salesreport.model.BranchSummary;
 import edu.itc.salesreport.model.ProductTotal;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.Clock;
 import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
@@ -32,7 +40,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 
-/** Task 1 skeleton: state, commands and ports. javafx.base only. */
+/** ViewModel for the sales report viewer. Uses only javafx.base. */
 public final class ReportViewModel {
 
     public static final List<String> BRANCHES = List.of("PNH", "REP", "BTB");
@@ -67,10 +75,11 @@ public final class ReportViewModel {
     private final ReadOnlyStringWrapper loadError =
             new ReadOnlyStringWrapper(this, "loadError", "");
 
-    // ---- computed state (Task 3 replaces the placeholders)
+    // ---- computed state
     private final StringBinding monthError;
     private final StringBinding branchError;
     private final StringBinding validationMessage;
+    private final BooleanBinding valid;
     private final BooleanBinding canGenerate;
     private final ObjectBinding<BigDecimal> totalRevenue;
     private final StringBinding totalRevenueText;
@@ -78,6 +87,8 @@ public final class ReportViewModel {
     private final Command generateCommand;
     private final Command cancelCommand;
     private BackgroundJobs.JobHandle running;
+
+    private record LoadResult(List<BranchSummary> summaries, List<ProductTotal> products) { }
 
     public ReportViewModel(SummarySource source, BackgroundJobs jobs,
                            Clock clock) {
@@ -91,19 +102,63 @@ public final class ReportViewModel {
         for (String b : BRANCHES) {
             branchSelected.put(b, new SimpleBooleanProperty(this, b, true));
         }
-        // TODO Task 3: real rules (future month, empty branch selection)
-        monthError = Bindings.createStringBinding(() -> "", month);
-        branchError = Bindings.createStringBinding(() -> "");
-        validationMessage = Bindings.createStringBinding(() -> "");
-        canGenerate = month.isNotNull().and(loading.not());
-        // TODO Task 2: sum of summaries' revenue, formatted "USD 1,234.50"
-        totalRevenue = Bindings.createObjectBinding(() -> BigDecimal.ZERO);
-        totalRevenueText = Bindings.createStringBinding(() -> "USD 0.00");
-        // TODO Task 2: bind visibleProducts' predicate to productFilter
+
+        monthError = Bindings.createStringBinding(
+                () -> checkMonth(month.get()), month);
+
+        Observable[] flags = branchSelected.values().toArray(Observable[]::new);
+        branchError = Bindings.createStringBinding(
+                () -> selectedBranches().isEmpty() ? "Select at least one branch." : "",
+                flags);
+
+        validationMessage = Bindings.createStringBinding(
+                () -> Stream.of(monthError.get(), branchError.get())
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining(" ")),
+                monthError, branchError);
+
+        valid = monthError.isEmpty().and(branchError.isEmpty());
+        canGenerate = valid.and(loading.not());
+
+        totalRevenue = Bindings.createObjectBinding(
+                () -> summaries.stream()
+                        .map(BranchSummary::revenue)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add),
+                summaries);
+
+        NumberFormat currencyFormat = NumberFormat.getNumberInstance(Locale.US);
+        currencyFormat.setMinimumFractionDigits(2);
+        currencyFormat.setMaximumFractionDigits(2);
+
+        totalRevenueText = Bindings.createStringBinding(
+                () -> "USD " + currencyFormat.format(totalRevenue.get()),
+                totalRevenue);
+
+        productFilter.addListener((obs, oldVal, newVal) -> {
+            String filter = newVal == null ? "" : newVal.trim().toLowerCase(Locale.ROOT);
+            if (filter.isEmpty()) {
+                visibleProducts.setPredicate(p -> true);
+            } else {
+                visibleProducts.setPredicate(p ->
+                        p.productName().toLowerCase(Locale.ROOT).contains(filter)
+                        || p.sku().toLowerCase(Locale.ROOT).contains(filter));
+            }
+        });
 
         generateCommand = new DelegateCommand(this::generate, canGenerate);
         cancelCommand = new DelegateCommand(this::cancel,
                 loading.getReadOnlyProperty());
+    }
+
+    private String checkMonth(YearMonth m) {
+        if (m == null) {
+            return "Choose a month.";
+        }
+        YearMonth today = YearMonth.now(clock);
+        if (m.isAfter(today)) {
+            return "Month " + m + " is in the future.";
+        }
+        return "";
     }
 
     public List<String> selectedBranches() {
@@ -114,11 +169,93 @@ public final class ReportViewModel {
     }
 
     private void generate() {
-        // Task 1 placeholder
+        YearMonth m = month.get();
+        List<String> branches = List.copyOf(selectedBranches());
+        if (m == null || branches.isEmpty()) {
+            return;
+        }
+
+        loading.set(true);
+        progress.set(0);
+        loadError.set("");
+        status.set("Loading " + branches.size() + " branch(es)...");
+
+        running = jobs.submit(sink -> loadAll(m, branches, sink),
+                new BackgroundJobs.JobListener<LoadResult>() {
+                    @Override
+                    public void progress(double fraction) {
+                        progress.set(fraction);
+                    }
+
+                    @Override
+                    public void succeeded(LoadResult result) {
+                        summaries.setAll(result.summaries());
+                        products.setAll(result.products());
+                        status.set(String.format(Locale.ROOT,
+                                "Loaded %d branch(es) for %s.",
+                                result.summaries().size(), m));
+                        loadError.set("");
+                        progress.set(1.0);
+                        loading.set(false);
+                        running = null;
+                    }
+
+                    @Override
+                    public void failed(Throwable error) {
+                        loadError.set(error.getMessage() != null
+                                ? error.getMessage() : error.toString());
+                        status.set("Load failed, previous data kept.");
+                        loading.set(false);
+                        running = null;
+                    }
+
+                    @Override
+                    public void cancelled() {
+                        status.set("Cancelled, previous data kept.");
+                        loading.set(false);
+                        running = null;
+                    }
+                });
     }
 
     private void cancel() {
-        // Task 1 placeholder
+        if (running != null) {
+            running.cancel();
+            running = null;
+        }
+    }
+
+    private LoadResult loadAll(YearMonth m, List<String> branches,
+                               BackgroundJobs.ProgressSink sink) throws Exception {
+        if (sink.isCancelled()) {
+            throw new CancellationException("Cancelled");
+        }
+        List<BranchSummary> branchList = new ArrayList<>();
+        Map<String, ProductTotal> mergedProducts = new LinkedHashMap<>();
+
+        for (int i = 0; i < branches.size(); i++) {
+            if (sink.isCancelled()) {
+                throw new CancellationException("Cancelled");
+            }
+            String b = branches.get(i);
+            BranchSummary summary = source.load(m, b);
+            branchList.add(summary);
+
+            for (ProductTotal pt : summary.topProducts()) {
+                mergedProducts.merge(pt.sku(), pt,
+                        (p1, p2) -> new ProductTotal(
+                                p1.sku(), p1.productName(),
+                                p1.revenue().add(p2.revenue()),
+                                p1.quantity() + p2.quantity()));
+            }
+            sink.update(i + 1, branches.size());
+        }
+
+        List<ProductTotal> sortedProducts = mergedProducts.values().stream()
+                .sorted(Comparator.comparing(ProductTotal::revenue).reversed())
+                .toList();
+
+        return new LoadResult(branchList, sortedProducts);
     }
 
     // ---- accessors: read-only types for everything the view must not set
