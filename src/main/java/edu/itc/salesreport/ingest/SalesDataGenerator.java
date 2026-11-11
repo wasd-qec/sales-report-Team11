@@ -77,6 +77,12 @@ public final class SalesDataGenerator {
     }
 
     public static void main(String[] args) throws IOException {
+        if (args.length >= 4) {
+            new SalesDataGenerator().generate(YearMonth.parse(args[0]),
+                    Integer.parseInt(args[1]), Long.parseLong(args[2]),
+                    Path.of(args[3]));
+            return;
+        }
         Path dataDir = Path.of(args.length > 0 ? args[0] : "data");
         var generator = new SalesDataGenerator();
         for (String m : List.of("2026-08", "2026-09")) {
